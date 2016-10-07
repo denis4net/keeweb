@@ -32,7 +32,7 @@
   "dropbox": "Dropbox",
   "gdrive": "Google Drive",
   "onedrive": "OneDrive",
-
+  "firebaseDatabase": "Firebase",
   "menuAllItems": "All Items",
   "menuColors": "Colors",
   "menuTrash": "Trash",

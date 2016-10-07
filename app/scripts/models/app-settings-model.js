@@ -37,7 +37,9 @@ var AppSettingsModel = Backbone.Model.extend({
         dropbox: true,
         webdav: true,
         gdrive: true,
-        onedrive: true
+        onedrive: true,
+        login: null,
+        password: null
     },
 
     initialize: function() {
