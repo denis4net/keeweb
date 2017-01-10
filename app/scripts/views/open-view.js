@@ -78,7 +78,7 @@ var OpenView = Backbone.View.extend({
             !(this.model.settings.get('canOpenDemo') && !this.model.settings.get('demoOpened'));
         this.renderTemplate({
             lastOpenFiles: this.getLastOpenFiles(),
-            canOpenKeyFromDropbox: DropboxLink.canChooseFile() && Storage.dropbox.enabled,
+            // canOpenKeyFromDropbox: DropboxLink.canChooseFile() && Storage.dropbox.enabled,
             demoOpened: this.model.settings.get('demoOpened'),
             storageProviders: storageProviders,
             canOpen: this.model.settings.get('canOpen'),

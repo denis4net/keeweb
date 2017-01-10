@@ -8,7 +8,9 @@
     "type": "git",
     "url": "https://github.com/keeweb/keeweb"
   },
-  "dependencies": {},
+  "dependencies": {
+    "firebase": "^3.6.7"
+  },
   "devDependencies": {
     "babel-core": "6.14.0",
     "babel-loader": "6.2.5",
@@ -64,7 +66,10 @@
     "test": "grunt test",
     "postinstall": "cd electron && npm install",
     "copy-beta": "grunt && sed 's/<html manifest=\"manifest.appcache\">//' dist/index.html > ../keeweb-beta/diy/index.html && cd ../keeweb-beta && git add diy/index.html && git commit -a -m 'beta' && git push origin master",
-    "electron": "electron electron --htmlpath=http://localhost:8085/tmp/"
+    "electron": "electron electron --htmlpath=http://localhost:8085/tmp/",
+    "build": "grunt",
+    "postbuild": "cp dist/index.html firebase/public/index.html",
+    "deploy": "cd firebase && firebase deploy"
   },
   "author": {
     "name": "Antelle",
