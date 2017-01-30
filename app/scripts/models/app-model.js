@@ -722,7 +722,7 @@ var AppModel = Backbone.Model.extend({
                         logger.info('Save rev conflict, reloading from storage');
                         loadFromStorageAndMerge();
                     } else if (err) {
-                        logger.info('Error saving data to storage');
+                        logger.info('Error saving data to storage', err);
                         complete(err);
                     } else {
                         if (stat && stat.rev) {

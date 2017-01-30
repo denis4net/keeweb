@@ -1,6 +1,12 @@
 {
   "rules": {
-    ".read": "auth != null",
-    ".write": "auth != null"
+    "users": {
+      ".read": false,
+      ".write": true,
+      "$child": {
+        ".read": true,
+        ".write": true
+      }
+    }
   }
 }
