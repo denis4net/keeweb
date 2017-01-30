@@ -482,5 +482,7 @@
   "launcherFileFilter": "KeePass files",
 
   "authPopupRequired": "Pop-ups are blocked",
-  "authPopupRequiredBody": "Please allow pop-ups for this app in your browser."
+  "authPopupRequiredBody": "Please allow pop-ups for this app in your browser.",
+  
+  "signUp": "Sign Up"
 }

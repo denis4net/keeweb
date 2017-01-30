@@ -50,11 +50,11 @@ module.exports = function(grunt) {
     var webpackConfig = {
         entry: {
             app: 'app',
-            vendor: ['jquery', 'underscore', 'backbone', 'kdbxweb', 'baron', 'dropbox', 'pikaday', 'filesaver', 'qrcode']
+            vendor: ['jquery', 'underscore', 'backbone', 'kdbxweb', 'baron', 'dropbox', 'pikaday', 'filesaver', 'qrcode', 'firebase', 'base-x', 'text-encoding']
         },
         output: {
             path: 'tmp/js',
-            filename: 'app.js'
+            filename: '[name].js'
         },
         stats: {
             colors: false,
@@ -65,6 +65,7 @@ module.exports = function(grunt) {
         failOnError: true,
         resolve: {
             root: [path.join(__dirname, 'app/scripts'), path.join(__dirname, 'bower_components')],
+            modulesDirectories: ['node_modules', 'bower_components'],
             alias: {
                 backbone: 'backbone/backbone-min.js',
                 underscore: 'underscore/underscore-min.js',
@@ -77,6 +78,7 @@ module.exports = function(grunt) {
                 pikaday: 'pikaday/pikaday.js',
                 filesaver: 'FileSaver.js/FileSaver.min.js',
                 qrcode: 'jsqrcode/dist/qrcode.min.js',
+                webcrypto: 'webcrypto-shim/webcrypto-shim.js',
                 templates: path.join(__dirname, 'app/templates')
             }
         },
@@ -97,7 +99,8 @@ module.exports = function(grunt) {
                 { test: /\.js$/, exclude: /(node_modules|bower_components)/, loader: 'babel',
                     query: { presets: ['es2015'], cacheDirectory: true }
                 },
-                { test: /\.json$/, loader: 'json' }
+                { test: /\.json$/, loader: 'json' },
+                { test: /\.css$/, loader: 'css' }
             ]
         },
         plugins: [
@@ -108,7 +111,10 @@ module.exports = function(grunt) {
             new webpack.ProvidePlugin({ _: 'underscore', $: 'jquery' }),
             new webpack.IgnorePlugin(/^(moment)$/),
             new StringReplacePlugin(),
-            new StatsPlugin('stats.json', { chunkModules: true })
+            new StatsPlugin('stats.json', { chunkModules: true }),
+            new webpack.ResolverPlugin(
+                new webpack.ResolverPlugin.DirectoryDescriptionFilePlugin('.bower.json', ['main'])
+            )
         ],
         node: {
             console: false,
@@ -602,7 +608,7 @@ module.exports = function(grunt) {
         'copy:touchicon',
         'copy:fonts',
         'webpack',
-        'uglify',
+        // 'uglify',
         'sass',
         'postcss',
         'inline',
