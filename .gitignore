@@ -15,3 +15,5 @@ obj/
 *.xcworkspace/
 xcuserdata/
 translations.json
+firebase/public
+

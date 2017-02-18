@@ -10,6 +10,7 @@ const OpenConfigView = Backbone.View.extend({
     events: {
         'click .open__config-btn-cancel': 'cancel',
         'click .open__config-btn-ok': 'apply',
+        'click .open__config-btn-signup': 'signUp',
         'input input': 'changeInput',
         'keyup input': 'keyup'
     },
@@ -29,6 +30,13 @@ const OpenConfigView = Backbone.View.extend({
         const data = this.getData();
         if (data) {
             this.trigger('apply', data);
+        }
+    },
+
+    signUp: function() {
+        const data = this.getData();
+        if (data) {
+            this.trigger('signUp', data);
         }
     },
 

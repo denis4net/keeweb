@@ -18,7 +18,8 @@ const StorageWebDav = StorageBase.extend({
                 {id: 'path', title: 'openUrl', desc: 'openUrlDesc', type: 'text', required: true},
                 {id: 'user', title: 'openUser', desc: 'openUserDesc', placeholder: 'openUserPlaceholder', type: 'text'},
                 {id: 'password', title: 'openPass', desc: 'openPassDesc', placeholder: 'openPassPlaceholder', type: 'password'}
-            ]
+            ],
+            signUp: false
         };
     },
 

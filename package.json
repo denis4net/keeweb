@@ -8,7 +8,9 @@
     "type": "git",
     "url": "https://github.com/keeweb/keeweb"
   },
-  "dependencies": {},
+  "dependencies": {
+    "firebase": "^3.6.9"
+  },
   "devDependencies": {
     "babel-core": "6.22.1",
     "babel-loader": "6.2.10",
@@ -21,6 +23,7 @@
     "eslint-plugin-promise": "3.4.0",
     "eslint-plugin-standard": "2.0.1",
     "exports-loader": "0.6.3",
+    "firebase-tools": "^3.3.0",
     "get-folder-size": "1.0.0",
     "grunt": "1.0.1",
     "grunt-bower-install-simple": "1.2.3",
@@ -65,7 +68,10 @@
     "test": "grunt test",
     "postinstall": "cd desktop && npm install",
     "copy-beta": "grunt && sed 's/<html manifest=\"manifest.appcache\">//' dist/index.html > ../keeweb-beta/diy/index.html && cd ../keeweb-beta && git add diy/index.html && git commit -a -m 'beta' && git push origin master",
-    "electron": "electron desktop --htmlpath=http://localhost:8085/tmp/"
+    "electron": "electron desktop --htmlpath=http://localhost:8085/tmp/",
+    "build": "grunt",
+    "postbuild": "cp dist/index.html firebase/public/index.html",
+    "deploy": "cd firebase && firebase deploy"
   },
   "author": {
     "name": "Antelle",
