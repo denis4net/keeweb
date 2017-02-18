@@ -12,6 +12,7 @@ module.exports = function(grunt) {
     require('time-grunt')(grunt);
     require('load-grunt-tasks')(grunt);
     grunt.loadTasks('grunt/tasks');
+    grunt.loadNpmTasks('grunt-cordova-ng');
 
     const webpack = require('webpack');
     const pkg = require('./package.json');
@@ -209,6 +210,11 @@ module.exports = function(grunt) {
             'desktop-win32-dist-ia32': {
                 src: 'tmp/desktop/KeeWeb.win.ia32.exe',
                 dest: `dist/desktop/KeeWeb-${pkg.version}.win.ia32.exe`,
+                nonull: true
+            },
+            'mobile': {
+                src: 'dist/index.html',
+                dest: 'cordova/www/index.html',
                 nonull: true
             }
         },
@@ -704,5 +710,11 @@ module.exports = function(grunt) {
     grunt.registerTask('desktop', 'Build web and desktop apps for all platforms', [
         'default',
         'build-desktop'
+    ]);
+
+    grunt.registerTask('mobile', 'Build web and mobile application', [
+        'default',
+        'copy:mobile',
+        'cordova:build'
     ]);
 };

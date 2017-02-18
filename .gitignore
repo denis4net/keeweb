@@ -16,4 +16,6 @@ obj/
 xcuserdata/
 translations.json
 firebase/public
+cordova/platforms/android
+cordova/www
 
