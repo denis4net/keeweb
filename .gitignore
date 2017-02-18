@@ -17,3 +17,7 @@ xcuserdata/
 translations.json
 firebase/public
 
+cordova/www
+cordova/platforms
+cordova/plugins
+cordova/icon.png

@@ -1,0 +1,42 @@
+language: generic
+os:
+- linux
+- osx
+sudo: required
+osx_image: xcode7.3
+services:
+- docker
+
+env:
+  global:
+    secure: hLbuuWKcQlk+R5UcTs/eGGDU6YhAB2m1NDRdGZg7JP/qNdT1gjy2q0xEKcLHT9Kfv5N1v7yCwIKY6Zr/4oPBjUS4eFJxIsL/Nv7Da/Pw4No8YcdZz+Hc9oY6Ojo9ua0LJiyfNm+QEum6r0PlLlHJykMeORIYnxSL/nYRLB1vZq4q1KtzwUSC9Q5RTDDr+jTpu7eQ5tAPAU6h7UUKhY9g6nGUWDKRpsBYJuww2Evc89g1Am+QxHFUBwvkoXxN7cXPQEbQlMV7+LbHP3X31RWhmJrXtch8Jfo9d6uWs6dv7QEEAxQKhGwTltbjekLmJ7BHadgZ8GcaOQ5qNiuvfLG9TmrxCXNzVNRPuIP0kL57KQvUUK19KWCwn6pJG6U3IvWID61qG8vYRsocAI4T7weGFvvei6uqxCf7YMZVXIziAd+qU+9SzDVBekgQfoLzCNuXi7XJpfknWFPuturvtRLn5z2pqRCjkgVIPFCba1qc7RIXG18M+ZJaWGq/f5wmOpTSSZS7AsC/8H3Rmcb8AZXpgpoyqRasbxNeaCB7zCm7mkR/7ye/btBmeJcOmLxRu1P0a6WKgWbu2xNDlr3IgQyr4XnrcBQXbdJKVE/6ubIBvDaK+VfESKuXMPpWkrzVzsRYlfcfauG4xohQ7OGPWvJDJrdnkV1fWNxZcbOigsqYJtI=
+
+install:
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    sudo npm install -g cordova; 
+    sudo npm install -g cordova-icon;
+    sudo npm install -g grunt;
+    sudo npm install -g node-sass;
+    brew link libtool xz;
+    brew install imagemagick;
+  fi;
+script:
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    npm cache clean -f;
+    npm install &&
+    grunt mobile:ios
+  fi;
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo docker run -ti --rm --workdir /var/src -v $(pwd):/var/src denis4inet/build-keeweb 
+    bash -c "npm install -g cordova-icon;
+      npm install;
+      grunt mobile:android";
+  fi;
+deploy:
+  provider: releases
+  api_key:
+    secure: f82WBKwE0Ky6moyz2+5kIrVtthSMgRjsGdwCUXabbC+zS0EqoiD7lxBzbttnSD0Hh8VqG4mDfw5AcVIhoS650w9cb8itejJhNv0r8BUIv3Ekb13mA3KtB66tYnNPN9c+JmNr6p/nX30uOX9UNJh/FTdpdzTp4/fxpaoEkzJekHHdxgk9Q8biOoLf2Y5WSB/mJFe+UIi4AksO+0FIYR84C8jDQ+RSLbz3rcZ03SPhVbiNRb6y62fxf6rKfJ3JFd1J4nIxqaBrqzSrCpAAHUHQPtCURlBdBBUGQWQM3GUnRWEIg0d7q+XxRCV7Qh9bN9mY/B5ySTsAk8skgOE7z0xA/GCJ81uol+2/DdgmUTXhj6V2fYckMffsr37DX1USAstKPYGQCOkVwAT5IKzhaV96ghxme2MYCb6XydHAYXC0eIWJucRKQVJ/DNs3n+Oo1fSAaRIqZalDKrUpKWMDeYfpIR9If6bcBkzM9ebsrdRQonES5n2TPs45o7xgcjukxq4cNpDuqIYZoWq6vZ1hFy8pm5mqp2BfTSypa7OOMdkAd6VbCAUrxcHeVYFLukJzvTcecIrYxGE4FQd89/qHY0+dEBOcNDBvAIAcuqwu4/jxPCbCrjZh9TpxbyJJLqEStsHRV9e4ig72pHsscOOqzGcvG5yxFOtP404+tM7lD0UfQgo=
+  file: 
+    - "cordova/platforms/android/build/outputs/apk/android-debug.apk"
+    - "cordova/platforms/ios/build/emulator/KeeWeb.ipa"
+  on:
+    repo: denis4net/keeweb
