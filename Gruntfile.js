@@ -12,7 +12,6 @@ module.exports = function(grunt) {
     require('time-grunt')(grunt);
     require('load-grunt-tasks')(grunt);
     grunt.loadTasks('grunt/tasks');
-    grunt.loadNpmTasks('grunt-cordova-ng');
 
     const webpack = require('webpack');
     const pkg = require('./package.json');
@@ -63,7 +62,8 @@ module.exports = function(grunt) {
         progress: false,
         failOnError: true,
         resolve: {
-            modulesDirectories: ['app/scripts', 'bower_components', 'node_modules'],
+            modules: [path.resolve(__dirname, 'app/scripts'), 'bower_components', 'node_modules'],
+            descriptionFiles: ['package.json', 'bower.json'],
             alias: {
                 backbone: 'backbone/backbone-min.js',
                 underscore: 'underscore/underscore-min.js',
@@ -113,10 +113,7 @@ module.exports = function(grunt) {
             new webpack.ProvidePlugin({ _: 'underscore', $: 'jquery' }),
             new webpack.IgnorePlugin(/^(moment)$/),
             new StringReplacePlugin(),
-            new StatsPlugin('stats.json', { chunkModules: true }),
-            new webpack.ResolverPlugin(
-                new webpack.ResolverPlugin.DirectoryDescriptionFilePlugin('.bower.json', ['main'])
-            )
+            new StatsPlugin('stats.json', { chunkModules: true })
         ],
         node: {
             console: false,
@@ -216,6 +213,13 @@ module.exports = function(grunt) {
                 src: 'dist/index.html',
                 dest: 'cordova/www/index.html',
                 nonull: true
+            }
+        },
+        cordova: {
+            build: {
+                options: {
+                    cwd: './cordova'
+                }
             }
         },
         eslint: {

@@ -9,7 +9,7 @@
     "url": "https://github.com/keeweb/keeweb"
   },
   "dependencies": {
-    "firebase": "^3.6.9"
+    "firebase": "^3.6.10"
   },
   "devDependencies": {
     "babel-core": "6.22.1",
@@ -36,7 +36,6 @@
     "grunt-contrib-htmlmin": "2.1.0",
     "grunt-contrib-uglify": "2.0.0",
     "grunt-contrib-watch": "1.0.0",
-    "grunt-cordova-ng": "^0.2.7",
     "grunt-electron": "5.0.0",
     "grunt-eslint": "19.0.0",
     "grunt-gitinfo": "0.1.8",
@@ -50,7 +49,7 @@
     "html-minifier": "3.3.0",
     "json-loader": "^0.5.4",
     "load-grunt-tasks": "3.5.2",
-    "node-sass": "4.4.0",
+    "node-sass": "https://registry.npmjs.org/node-sass/-/node-sass-4.4.0.tgz",
     "node-stream-zip": "1.3.7",
     "raw-loader": "0.5.1",
     "stats-webpack-plugin": "0.4.3",
