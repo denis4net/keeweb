@@ -1,0 +1,8 @@
+sudo: required
+language: node_js
+
+services:
+  - docker
+
+script:
+- docker run -ti --rm --workdir /opt/src -v $(pwd):/opt/src shimaore/cordova "npm install -g grunt; npm install; grunt mobile"
