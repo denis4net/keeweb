@@ -1,0 +1,9 @@
+sudo: required
+language: python
+
+services:
+  - docker
+
+script:
+- docker run -ti --rm --workdir /opt/src -v $(pwd):/opt/src denis4inet/keeweb /bin/bash -c "npm install node-sass; npm install; grunt mobile"
+# ./cordova/platforms/android/build/outputs/apk/android-debug.apk
