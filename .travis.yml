@@ -1,9 +1,14 @@
 sudo: required
 language: python
-
 services:
-  - docker
-
+- docker
 script:
-- docker run -ti --rm --workdir /opt/src -v $(pwd):/opt/src denis4inet/keeweb /bin/bash -c "npm install node-sass; npm install; grunt mobile"
-# ./cordova/platforms/android/build/outputs/apk/android-debug.apk
+- sudo docker run -ti --rm --workdir /var/src -v $(pwd):/var/src denis4inet/build-keeweb
+  bash -c "npm install; grunt mobile"
+deploy:
+  provider: releases
+  api_key:
+    secure: ${ENCRYPTED_GITHUB_KEY}
+  file: "./cordova/platforms/android/build/outputs/apk/android-debug.apk"
+  on:
+    repo: denis4net/keeweb
