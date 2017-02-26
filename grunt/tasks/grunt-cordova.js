@@ -10,8 +10,7 @@ module.exports = function (grunt) {
             opts: {
                 env: process.env,
                 shell: true,
-                stdout: 'inherit',
-                stderr: 'inherit',
+                stdio: 'inherit',
                 cwd: this.options().cwd || 'cordova'
             }
         }, (error, result, code) => {
