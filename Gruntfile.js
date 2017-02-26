@@ -716,9 +716,15 @@ module.exports = function(grunt) {
         'build-desktop'
     ]);
 
-    grunt.registerTask('mobile', 'Build web and mobile application', [
+    grunt.registerTask('mobile:android', 'Build web and mobile application', [
         'default',
         'copy:mobile',
-        'cordova:build'
+        'cordova:build:android'
+    ]);
+
+    grunt.registerTask('mobile:ios', 'Build web and mobile application', [
+        'default',
+        'copy:mobile',
+        'cordova:build:ios'
     ]);
 };

@@ -4,7 +4,7 @@ services:
 - docker
 script:
 - sudo docker run -ti --rm --workdir /var/src -v $(pwd):/var/src denis4inet/build-keeweb
-  bash -c "npm install; grunt mobile"
+  bash -c "npm install; grunt mobile:android"
 deploy:
   provider: releases
   api_key:
