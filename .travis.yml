@@ -1,8 +1,14 @@
 sudo: required
-language: node_js
-
+language: python
 services:
-  - docker
-
+- docker
 script:
-- docker run -ti --rm --workdir /opt/src -v $(pwd):/opt/src shimaore/cordova "npm install -g grunt; npm install; grunt mobile"
+- sudo docker run -ti --rm --workdir /var/src -v $(pwd):/var/src denis4inet/build-keeweb
+  bash -c "npm install; grunt mobile"
+deploy:
+  provider: releases
+  api_key:
+    secure: hAsqi/OBYXI/a2e83TkfoZ8zdZtXl8sPMm8lud8mW2Jhzx/cJhIdNUidPB7h0tKsTgF9AgAuHCEdq9KtSHm482YDhUcd52+1BlA5US5iej5jf2vy0yu8WgZmZzApblA/3olouBo4td2sTJOj5j0GF2+27s9K9VyKDbr0+EQcTvRQwDeVRa0gl/aJZwPHAO9bFChVs9mRV33KyL/mA/KPFY7OM3g3jyW5lxwZ4JDhRF312ev0T4vP5ZrtM5Bf71Isre7xN8qCDmq2jjkiZXKur0fk+IEnupk0eOMutvnWUvETbnRBu3whNc5TMTwEigyR9YCx0xoOWyKBYg29waDehPckeJDIGvhhAKHBuKuoIMdyHR+n0Bb4PDYZms2R8iII1wArQ4UyKUBwWPJaiyZUnkxF08bvMzglpW6yqPMw2RrhaLnyTqOEBRJacddHCcWd1vJHKXWi3Hn04LmSU9h1pPhLn/qJj9y9u+bCQZLhIcPYyXoekOCZX89iwY8JmWuhepnhsKLAkhCGPlmKZWRNdtufCZog6aXSR0yPQlCPBNS2vlcO++sor3bUSvau7TZlSd6CG1JlPVNwsjC85Qg0BElUJJgASIAtmHkgj/a3U/fHquAA0tn4rfXzC9pwwtI+9UC0Zlk8HHUTiAsYWKi0+M7YnhtjYnSV9uqdbM1r8iU=
+  file: "./cordova/platforms/android/build/outputs/apk/android-debug.apk"
+  on:
+    repo: denis4net/keeweb
