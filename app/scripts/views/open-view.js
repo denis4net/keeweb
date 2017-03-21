@@ -637,7 +637,6 @@ const OpenView = Backbone.View.extend({
         this.views.openConfig = new OpenConfigView({ el: this.$el.find('.open__config-wrap'), model: config }).render();
         this.views.openConfig.on('cancel', this.closeConfig.bind(this));
         this.views.openConfig.on('apply', this.applyConfig.bind(this));
-        this.views.openConfig.on('signUp', this.signUp.bind(this));
         this.$el.find('.open__pass-area').addClass('hide');
         this.$el.find('.open__icons--lower').addClass('hide');
     },
@@ -654,43 +653,6 @@ const OpenView = Backbone.View.extend({
         this.$el.find('.open__pass-area').removeClass('hide');
         this.$el.find('.open__config').addClass('hide');
         this.focusInput();
-    },
-
-    signUp: function(config) {
-        if (this.busy || !config) {
-            return;
-        }
-
-        this.busy = true;
-        this.views.openConfig.setDisabled(true);
-        const storage = Storage[config.storage];
-        const opts = _.omit(config, ['path', 'storage']);
-
-        if (storage.signUp) {
-            const req = {
-                waitId: this.storageWaitId,
-                storage: config.storage,
-                path: config.path,
-                opts: opts
-            };
-
-            storage.signUp(opts, this.signUpComplete.bind(this, req));
-        }
-    },
-
-    signUpComplete: function(req, err) {
-        if (this.storageWaitId !== req.waitId) {
-            return;
-        }
-
-        this.storageWaitId = null;
-        this.busy = false;
-        if (err) {
-            this.views.openConfig.setDisabled(false);
-            this.views.openConfig.setError(err);
-        } else {
-            this.closeConfig();
-        }
     },
 
     applyConfig: function(config) {

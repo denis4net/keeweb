@@ -182,6 +182,8 @@
   "openError": "Error",
   "openErrorDescription": "There was an error opening file",
   "openErrorFileNotFound": "File not found",
+  "openUserID": "User ID",
+  "openSignUp": "Sign Up",
 
   "detAttDownload": "Shift-click attachment button to download or",
   "detAttDelToRemove": "Delete to remove",
@@ -493,7 +495,5 @@
   "launcherFileFilter": "KeePass files",
 
   "authPopupRequired": "Pop-ups are blocked",
-  "authPopupRequiredBody": "Please allow pop-ups for this app in your browser.",
-  
-  "signUp": "Sign Up"
+  "authPopupRequiredBody": "Please allow pop-ups for this app in your browser."
 }

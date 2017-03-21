@@ -160,13 +160,12 @@ option {
 
 input[type=checkbox] {
   display: none;
-
   &:not([disabled]) + label:hover:before {
     @include th {
       color: action-color();
     }
   }
-  & + label:before {
+  & {
     @include fa-icon;
     content: $fa-var-square-o;
     display: inline-block;
@@ -175,8 +174,9 @@ input[type=checkbox] {
       color: text-color();
     }
   }
-  &:checked + label:before {
+  &:checked  {
     content: $fa-var-check-square-o;
+    display: inline-block;
   }
 }
 

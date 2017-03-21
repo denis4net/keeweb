@@ -41,9 +41,10 @@ const FirebaseDB = StorageBase.extend({
         return {
             fields: [
                 { id: 'user', title: 'openUser', placeholder: 'openUserPlaceholder', type: 'text' },
-                { id: 'password', title: 'openPass', placeholder: 'openPassPlaceholder', type: 'password' }
-            ],
-            signUp: true
+                { id: 'password', title: 'openPass', placeholder: 'openPassPlaceholder', type: 'password' },
+                { id: 'userID', title: 'openUserID', placeholder: 'openUserIDPlaceholder', type: 'password' },
+                { id: 'signUp', title: 'openSignUp', placeholder: 'openSignUpPlacehodler', type: 'checkbox', options: 'checked' }
+            ]
         };
     },
 
@@ -85,6 +86,31 @@ const FirebaseDB = StorageBase.extend({
                 PBKDF2_OPTIONS.keyBytes * 8
             );
         }).then((bits) => Base58.encode(new Uint8Array(bits)));
+    },
+
+    _login: function(userId) {
+        this._ctx = { userId: userId };
+        SettingsStore.save(STORE_KEY, this._ctx);
+        return this._getDBRef().once('value').then((s) => {
+            const err = s.exists() ? null : 'User or password is incorrect or user doesn\'t exist';
+            return err;
+        });
+    },
+
+    _signUp: function (config) {
+        return this._generateUserToken(config).then(userId => {
+            this._ctx = { userId: userId };
+
+            return this._getDBRef().once('value').then((s) => {
+                if (s.exists()) {
+                    this._ctx = null;
+                    return callback('User already exists');
+                }
+
+                SettingsStore.save(STORE_KEY, this._ctx);
+                return this._getDBRef().set({ registrationTime: Date.now() });
+            });
+        });
     },
 
     save: function (id, opts, data, callback, rev) {
@@ -137,33 +163,18 @@ const FirebaseDB = StorageBase.extend({
         this._getFileRef(id).remove().then(callback).catch(callback);
     },
 
-    signUp: function (config, callback) {
-        this._generateUserToken(config).then(userId => {
-            this._ctx = { userId: userId };
-
-            this._getDBRef().once('value').then((s) => {
-                if (s.exists()) {
-                    this._ctx = null;
-                    return callback('User already exists');
-                }
-
-                SettingsStore.save(STORE_KEY, this._ctx);
-                return this._getDBRef().set({ registrationTime: Date.now() })
-                    .then(callback)
-                    .catch(callback);
-            }).catch(callback);
-        });
-    },
-
     applyConfig: function (config, callback) {
-        this._generateUserToken(config).then(userId => {
-            this._ctx = { userId: userId };
-            SettingsStore.save(STORE_KEY, this._ctx);
-            this._getDBRef().once('value').then((s) => {
-                const err = s.exists() ? null : 'User or password is incorrect or user doesn\'t exist';
-                callback(err);
-            }).catch(callback);
-        });
+        if (config.signUp === 'on') {
+            return this._signUp(config).then(callback).catch(callback);
+        } else if (config.userID && config.userID.length > 0) {
+            return this._login(config.userID)
+                .then(callback)
+                .catch(callback);
+        } else {
+            return this._generateUserToken(config).then(userID => this._login(userID))
+                .then(callback)
+                .catch(callback);
+        }
     }
 });
 
