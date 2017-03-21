@@ -62,7 +62,8 @@ module.exports = function(grunt) {
         progress: false,
         failOnError: true,
         resolve: {
-            modulesDirectories: ['app/scripts', 'bower_components', 'node_modules'],
+            modules: [path.resolve(__dirname, 'app/scripts'), 'bower_components', 'node_modules'],
+            descriptionFiles: ['package.json', 'bower.json'],
             alias: {
                 backbone: 'backbone/backbone-min.js',
                 underscore: 'underscore/underscore-min.js',
@@ -112,10 +113,7 @@ module.exports = function(grunt) {
             new webpack.ProvidePlugin({ _: 'underscore', $: 'jquery' }),
             new webpack.IgnorePlugin(/^(moment)$/),
             new StringReplacePlugin(),
-            new StatsPlugin('stats.json', { chunkModules: true }),
-            new webpack.ResolverPlugin(
-                new webpack.ResolverPlugin.DirectoryDescriptionFilePlugin('.bower.json', ['main'])
-            )
+            new StatsPlugin('stats.json', { chunkModules: true })
         ],
         node: {
             console: false,
@@ -210,6 +208,18 @@ module.exports = function(grunt) {
                 src: 'tmp/desktop/KeeWeb.win.ia32.exe',
                 dest: `dist/desktop/KeeWeb-${pkg.version}.win.ia32.exe`,
                 nonull: true
+            },
+            'mobile': {
+                src: 'dist/index.html',
+                dest: 'cordova/www/index.html',
+                nonull: true
+            }
+        },
+        cordova: {
+            build: {
+                options: {
+                    cwd: './cordova'
+                }
             }
         },
         eslint: {
@@ -704,5 +714,17 @@ module.exports = function(grunt) {
     grunt.registerTask('desktop', 'Build web and desktop apps for all platforms', [
         'default',
         'build-desktop'
+    ]);
+
+    grunt.registerTask('mobile:android', 'Build web and mobile application', [
+        'default',
+        'copy:mobile',
+        'cordova:build:android'
+    ]);
+
+    grunt.registerTask('mobile:ios', 'Build web and mobile application', [
+        'default',
+        'copy:mobile',
+        'cordova:build:ios'
     ]);
 };

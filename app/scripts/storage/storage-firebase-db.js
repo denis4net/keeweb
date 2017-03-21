@@ -104,7 +104,7 @@ const FirebaseDB = StorageBase.extend({
             return this._getDBRef().once('value').then((s) => {
                 if (s.exists()) {
                     this._ctx = null;
-                    return callback('User already exists');
+                    return;
                 }
 
                 SettingsStore.save(STORE_KEY, this._ctx);
