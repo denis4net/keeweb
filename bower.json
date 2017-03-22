@@ -36,7 +36,6 @@
     "argon2-browser": "0.0.5",
     "webcrypto-shim": "^0.1.1",
     "base-x": "git://github.com/cryptocoinjs/base-x.git#^2.0.4",
-    "text-encoding": "^0.6.4",
-    "firebase": "^3.6.10"
+    "text-encoding": "^0.6.4"
   }
 }
