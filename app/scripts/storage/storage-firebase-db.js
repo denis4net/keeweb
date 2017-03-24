@@ -43,7 +43,7 @@ const FirebaseDB = StorageBase.extend({
                 { id: 'user', title: 'openUser', placeholder: 'openUserPlaceholder', type: 'text' },
                 { id: 'password', title: 'openPass', placeholder: 'openPassPlaceholder', type: 'password' },
                 { id: 'userID', title: 'openUserID', placeholder: 'openUserIDPlaceholder', type: 'password' },
-                { id: 'signUp', title: 'openSignUp', placeholder: 'openSignUpPlacehodler', type: 'checkbox', options: 'checked' }
+                { id: 'signUp', title: 'openSignUp', placeholder: 'openSignUpPlacehodler', type: 'checkbox' }
             ]
         };
     },
@@ -164,7 +164,7 @@ const FirebaseDB = StorageBase.extend({
     },
 
     applyConfig: function (config, callback) {
-        if (config.signUp === 'on') {
+        if (config.signUp) {
             return this._signUp(config).then(callback).catch(callback);
         } else if (config.userID && config.userID.length > 0) {
             return this._login(config.userID)

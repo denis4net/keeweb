@@ -52,7 +52,11 @@ const OpenConfigView = Backbone.View.extend({
         this.model.fields.every(function(field) {
             const input = this.$el.find('#open__config-field-' + field.id)[0];
             if (data && input.checkValidity()) {
-                data[field.id] = input.value;
+                if (input.type === 'checkbox') {
+                    data[field.id] = input.checked;
+                } else {
+                    data[field.id] = input.value;
+                }
             } else {
                 data = null;
                 return false;
