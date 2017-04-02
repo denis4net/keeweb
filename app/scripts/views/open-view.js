@@ -582,6 +582,7 @@ const OpenView = Backbone.View.extend({
                 const fileName = UrlUtil.getDataFileName(file.name);
                 buttons.push({result: file.path, title: fileName});
                 allStorageFiles[file.path] = file;
+                logger.debug('listStorage %s - rev: %s', file.name, file.rev);
             });
             if (!buttons.length) {
                 let body = Locale.openNothingFoundBody;

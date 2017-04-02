@@ -67,6 +67,10 @@ const FirebaseDB = StorageBase.extend({
         return this._getDBRef('/files/' + (name || ''));
     },
 
+    _getFileStatRef: function (name) {
+        return this._getDBRef('/files/' + name + '/stat');
+    },
+
     _generateUserToken: function (config) {
         return crypto.subtle.importKey(
             'raw', // only "raw" is allowed
@@ -113,15 +117,13 @@ const FirebaseDB = StorageBase.extend({
         });
     },
 
-    save: function (id, opts, data, callback, rev) {
+    save: function (id, opts, data, callback) {
         crypto.subtle.digest('SHA-256', data).then((hash) => {
-            rev = rev || Base64.encode(hash);
-            const stat = { rev: rev };
+            const stat = { rev: Base64.encode(hash) };
             this.logger.debug('Saving', id, stat);
-            this._getFileRef(id).update({ data: Base64.encode(data), stat: stat })
-                .then(() => callback(null, stat))
-                .catch(callback);
-        });
+            this._getFileRef(id).update({ data: Base64.encode(data), stat: stat });
+            return stat;
+        }).then(stat => callback(null, stat)).catch(callback);
     },
 
     load: function (id, opts, callback) {
@@ -133,10 +135,10 @@ const FirebaseDB = StorageBase.extend({
     },
 
     stat: function (id, opts, callback) {
-        this._getFileRef(id).once('value')
+        this._getFileStatRef(id).once('value')
             .then((snapshot) => {
                 if (snapshot.exists()) {
-                    callback(null, snapshot.child('stat').val());
+                    callback(null, snapshot.val());
                 } else {
                     callback({ notFound: true, message: id + ' is not found' });
                 }

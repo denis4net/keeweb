@@ -372,7 +372,7 @@ const AppModel = Backbone.Model.extend({
             logger.info('Open file from cache as main storage');
             this.openFileFromCache(params, callback, fileInfo);
         } else if (fileInfo && fileInfo.get('openDate') && fileInfo.get('rev') === params.rev && fileInfo.get('storage') !== 'file') {
-            logger.info('Open file from cache because it is latest');
+            logger.info(`Open file from cache because it is latest - rev: ${params.rev}`);
             this.openFileFromCache(params, callback, fileInfo);
         } else if (!fileInfo || !fileInfo.get('openDate') || params.storage === 'file') {
             logger.info('Open file from storage', params.storage);
@@ -600,9 +600,6 @@ const AppModel = Backbone.Model.extend({
     },
 
     syncFile: function(file, options, callback) {
-        if (file.get('demo')) {
-            return callback && callback();
-        }
         if (file.get('syncing')) {
             return callback && callback('Sync in progress');
         }
@@ -611,8 +608,9 @@ const AppModel = Backbone.Model.extend({
         }
         const logger = new Logger('sync', file.get('name'));
         const storage = options.storage || file.get('storage');
-        let path = options.path || file.get('path');
         const opts = options.opts || file.get('opts');
+
+        let path = options.path || file.get('path');
         if (storage && Storage[storage].getPathForName && (!path || storage !== file.get('storage'))) {
             path = Storage[storage].getPathForName(file.get('name'));
         }
@@ -769,6 +767,7 @@ const AppModel = Backbone.Model.extend({
                     }
                 }, fileInfo.get('rev'));
             };
+
             logger.info('Stat file');
             Storage[storage].stat(path, opts, (err, stat) => {
                 if (err) {
@@ -794,14 +793,14 @@ const AppModel = Backbone.Model.extend({
                     }
                 } else if (stat.rev === fileInfo.get('rev')) {
                     if (file.get('modified')) {
-                        logger.info('Stat found same version, modified, saving');
+                        logger.info('Stat found same version (rev: %s), modified, saving', stat.rev);
                         saveToCacheAndStorage();
                     } else {
-                        logger.info('Stat found same version, not modified');
+                        logger.info('Stat found same version (rev: %s), not modified', stat.rev);
                         complete();
                     }
                 } else {
-                    logger.info('Found new version, loading from storage');
+                    logger.info('Found new version (rev: %s), loading from storage', stat.rev);
                     loadFromStorageAndMerge();
                 }
             });
