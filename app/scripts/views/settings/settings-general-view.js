@@ -1,5 +1,3 @@
-'use strict';
-
 const Backbone = require('backbone');
 const SettingsPrvView = require('./settings-prv-view');
 const SettingsLogsView = require('./settings-logs-view');
@@ -14,7 +12,9 @@ const SettingsManager = require('../../comp/settings-manager');
 const Storage = require('../../storage');
 const FeatureDetector = require('../../util/feature-detector');
 const Locale = require('../../util/locale');
+const SemVer = require('../../util/semver');
 const Links = require('../../const/links');
+const AutoType = require('../../auto-type');
 
 const SettingsGeneralView = Backbone.View.extend({
     template: require('templates/settings/settings-general.hbs'),
@@ -32,8 +32,10 @@ const SettingsGeneralView = Backbone.View.extend({
         'change .settings__general-minimize': 'changeMinimize',
         'change .settings__general-lock-on-minimize': 'changeLockOnMinimize',
         'change .settings__general-lock-on-copy': 'changeLockOnCopy',
+        'change .settings__general-lock-on-auto-type': 'changeLockOnAutoType',
         'change .settings__general-table-view': 'changeTableView',
         'change .settings__general-colorful-icons': 'changeColorfulIcons',
+        'change .settings__general-titlebar-style': 'changeTitlebarStyle',
         'click .settings__general-update-btn': 'checkUpdate',
         'click .settings__general-restart-btn': 'restartApp',
         'click .settings__general-download-update-btn': 'downloadUpdate',
@@ -47,30 +49,6 @@ const SettingsGeneralView = Backbone.View.extend({
 
     views: null,
 
-    allThemes: {
-        fb: 'setGenThemeFb',
-        db: 'setGenThemeDb',
-        sd: 'setGenThemeSd',
-        sl: 'setGenThemeSl',
-        wh: 'setGenThemeWh',
-        te: 'setGenThemeTe',
-        hc: 'setGenThemeHc'
-    },
-
-    allLocales: {
-        'en': 'English',
-        'de-DE': 'Deutsch',
-        'es-ES': 'Español',
-        'fr-FR': 'Français',
-        'it-IT': 'Italiano',
-        'nl-NL': 'Nederlands',
-        'pl': 'Polski',
-        'pt-PT': 'Português',
-        'ru-RU': 'Русский',
-        'sv-SE': 'Svenska',
-        'zh-CN': '汉语'
-    },
-
     initialize: function() {
         this.views = {};
         this.listenTo(UpdateModel.instance, 'change:status', this.render, this);
@@ -82,10 +60,11 @@ const SettingsGeneralView = Backbone.View.extend({
         const updateFound = UpdateModel.instance.get('updateStatus') === 'found';
         const updateManual = UpdateModel.instance.get('updateManual');
         const storageProviders = this.getStorageProviders();
+
         this.renderTemplate({
-            themes: _.mapObject(this.allThemes, theme => Locale[theme]),
+            themes: _.mapObject(SettingsManager.allThemes, theme => Locale[theme]),
             activeTheme: AppSettingsModel.instance.get('theme'),
-            locales: this.allLocales,
+            locales: SettingsManager.allLocales,
             activeLocale: SettingsManager.activeLocale,
             fontSize: AppSettingsModel.instance.get('fontSize'),
             expandGroups: AppSettingsModel.instance.get('expandGroups'),
@@ -100,8 +79,10 @@ const SettingsGeneralView = Backbone.View.extend({
             canAutoUpdate: Updater.enabled,
             canMinimize: Launcher && Launcher.canMinimize(),
             canDetectMinimize: !!Launcher,
+            canAutoType: AutoType.enabled,
             lockOnMinimize: Launcher && AppSettingsModel.instance.get('lockOnMinimize'),
             lockOnCopy: AppSettingsModel.instance.get('lockOnCopy'),
+            lockOnAutoType: AppSettingsModel.instance.get('lockOnAutoType'),
             tableView: AppSettingsModel.instance.get('tableView'),
             canSetTableView: !FeatureDetector.isMobile,
             autoUpdate: Updater.getAutoUpdateType(),
@@ -114,6 +95,8 @@ const SettingsGeneralView = Backbone.View.extend({
             updateManual: updateManual,
             releaseNotesLink: Links.ReleaseNotes,
             colorfulIcons: AppSettingsModel.instance.get('colorfulIcons'),
+            supportsTitleBarStyles: Launcher && FeatureDetector.supportsTitleBarStyles(),
+            titlebarStyle: AppSettingsModel.instance.get('titlebarStyle'),
             storageProviders: storageProviders
         });
         this.renderProviderViews(storageProviders);
@@ -149,7 +132,7 @@ const SettingsGeneralView = Backbone.View.extend({
                 return errMsg;
             case 'ok':
                 let msg = Locale.setGenCheckedAt + ' ' + Format.dtStr(UpdateModel.instance.get('lastCheckDate')) + ': ';
-                const cmp = Updater.compareVersions(RuntimeInfo.version, UpdateModel.instance.get('lastVersion'));
+                const cmp = SemVer.compareVersions(RuntimeInfo.version, UpdateModel.instance.get('lastVersion'));
                 if (cmp >= 0) {
                     msg += Locale.setGenLatestVer;
                 } else {
@@ -195,11 +178,7 @@ const SettingsGeneralView = Backbone.View.extend({
         const locale = e.target.value;
         if (locale === '...') {
             e.target.value = AppSettingsModel.instance.get('locale') || 'en';
-            Alerts.info({
-                icon: 'language',
-                header: Locale.setGenLocMsg,
-                body: Locale.setGenLocMsgBody + ` <a target="_blank" href="${Links.Translation}">${Locale.setGenLocMsgLink}</a>`
-            });
+            this.appModel.menu.select({ item: this.appModel.menu.pluginsSection.get('items').first() });
             return;
         }
         AppSettingsModel.instance.set('locale', locale);
@@ -208,6 +187,11 @@ const SettingsGeneralView = Backbone.View.extend({
     changeFontSize: function(e) {
         const fontSize = +e.target.value;
         AppSettingsModel.instance.set('fontSize', fontSize);
+    },
+
+    changeTitlebarStyle: function(e) {
+        const titlebarStyle = e.target.value;
+        AppSettingsModel.instance.set('titlebarStyle', titlebarStyle);
     },
 
     changeClipboard: function(e) {
@@ -256,6 +240,11 @@ const SettingsGeneralView = Backbone.View.extend({
     changeLockOnCopy: function(e) {
         const lockOnCopy = e.target.checked || false;
         AppSettingsModel.instance.set('lockOnCopy', lockOnCopy);
+    },
+
+    changeLockOnAutoType: function(e) {
+        const lockOnAutoType = e.target.checked || false;
+        AppSettingsModel.instance.set('lockOnAutoType', lockOnAutoType);
     },
 
     changeTableView: function(e) {

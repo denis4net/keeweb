@@ -1,5 +1,3 @@
-'use strict';
-
 const Backbone = require('backbone');
 const DragView = require('../views/drag-view');
 const MenuView = require('../views/menu/menu-view');
@@ -22,6 +20,7 @@ const IdleTracker = require('../comp/idle-tracker');
 const Launcher = require('../comp/launcher');
 const SettingsManager = require('../comp/settings-manager');
 const Locale = require('../util/locale');
+const FeatureDetector = require('../util/feature-detector');
 const UpdateModel = require('../models/update-model');
 
 const AppView = Backbone.View.extend({
@@ -39,6 +38,8 @@ const AppView = Backbone.View.extend({
 
     views: null,
 
+    titlebarStyle: 'default',
+
     initialize: function () {
         this.views = {};
         this.views.menu = new MenuView({ model: this.model.menu });
@@ -53,6 +54,8 @@ const AppView = Backbone.View.extend({
 
         this.views.menu.listenDrag(this.views.menuDrag);
         this.views.list.listenDrag(this.views.listDrag);
+
+        this.titlebarStyle = this.model.settings.get('titlebarStyle');
 
         this.listenTo(this.model.settings, 'change:theme', this.setTheme);
         this.listenTo(this.model.settings, 'change:locale', this.setLocale);
@@ -81,6 +84,9 @@ const AppView = Backbone.View.extend({
 
         this.listenTo(UpdateModel.instance, 'change:updateReady', this.updateApp);
 
+        this.listenTo(Backbone, 'enter-full-screen', this.enterFullScreen);
+        this.listenTo(Backbone, 'leave-full-screen', this.leaveFullScreen);
+
         window.onbeforeunload = this.beforeUnload.bind(this);
         window.onresize = this.windowResize.bind(this);
         window.onblur = this.windowBlur.bind(this);
@@ -92,17 +98,34 @@ const AppView = Backbone.View.extend({
         setInterval(this.syncAllByTimer.bind(this), Timeouts.AutoSync);
 
         this.setWindowClass();
+        this.fixClicksInEdge();
     },
 
     setWindowClass: function() {
-        if (window.chrome && window.chrome.webstore) {
-            this.$el.addClass('chrome');
+        const getBrowserCssClass = FeatureDetector.getBrowserCssClass();
+        if (getBrowserCssClass) {
+            this.$el.addClass(getBrowserCssClass);
+        }
+        if (this.titlebarStyle !== 'default') {
+            this.$el.addClass('titlebar-' + this.titlebarStyle);
+        }
+    },
+
+    fixClicksInEdge: function() {
+        // MS Edge doesn't want to handle clicks by default
+        // TODO: remove once Edge 14 share drops enough
+        // https://github.com/keeweb/keeweb/issues/636#issuecomment-304225634
+        // https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/5782378/
+        if (FeatureDetector.needFixClicks) {
+            const msEdgeScrewer = $('<input/>').appendTo(this.$el).focus();
+            setTimeout(() => msEdgeScrewer.remove(), 0);
         }
     },
 
     render: function () {
         this.$el.html(this.template({
-            beta: this.model.isBeta
+            beta: this.model.isBeta,
+            titlebarStyle: this.titlebarStyle
         }));
         this.panelEl = this.$el.find('.app__panel:first');
         this.views.listWrap.setElement(this.$el.find('.app__list-wrap')).render();
@@ -266,6 +289,7 @@ const AppView = Backbone.View.extend({
         } else {
             this.showOpenFile();
         }
+        this.fixClicksInEdge();
     },
 
     showFileSettings: function(e) {
@@ -354,6 +378,14 @@ const AppView = Backbone.View.extend({
         if (e.target === window) {
             Backbone.trigger('page-blur');
         }
+    },
+
+    enterFullScreen: function () {
+        this.$el.addClass('fullscreen');
+    },
+
+    leaveFullScreen: function () {
+        this.$el.removeClass('fullscreen');
     },
 
     escPressed: function() {

@@ -1,5 +1,3 @@
-'use strict';
-
 const Backbone = require('backbone');
 const kdbxweb = require('kdbxweb');
 const GroupModel = require('../../models/group-model');
@@ -418,9 +416,7 @@ const DetailsView = Backbone.View.extend({
                 CopyPaste.createHiddenInput(fieldText);
             }
             const copyRes = CopyPaste.copy(fieldText);
-            if (copyRes) {
-                this.fieldCopied({ source: editView, copyRes: copyRes });
-            }
+            this.fieldCopied({ source: editView, copyRes: copyRes });
         }
     },
 
@@ -483,7 +479,8 @@ const DetailsView = Backbone.View.extend({
                         i++;
                         fieldName = e.newField + i;
                     }
-                    this.model.setField(fieldName, e.val);
+                    const allowEmpty = this.model.group.isEntryTemplatesGroup();
+                    this.model.setField(fieldName, e.val, allowEmpty);
                     this.entryUpdated();
                     return;
                 } else if (fieldName === 'File') {
@@ -548,7 +545,7 @@ const DetailsView = Backbone.View.extend({
             : Locale.detFieldCopied;
         let tip;
         if (!this.isHidden()) {
-            tip = new Tip(fieldLabel, {title: msg, placement: 'right', fast: true, force: true});
+            tip = Tip.createTip(fieldLabel[0], {title: msg, placement: 'right', fast: true, force: true, noInit: true});
             this.fieldCopyTip = tip;
             tip.show();
         }

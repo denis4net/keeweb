@@ -1,5 +1,3 @@
-'use strict';
-
 const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const STORE_KEY = 'firebase-db-credentials';
 

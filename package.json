@@ -1,8 +1,9 @@
 {
   "name": "keeweb",
-  "version": "1.4.0",
+  "version": "1.5.4",
   "description": "Free cross-platform password manager compatible with KeePass",
   "main": "Gruntfile.js",
+  "private": true,
   "homepage": "https://keeweb.info",
   "repository": {
     "type": "git",
@@ -15,7 +16,7 @@
     "base64-loader": "1.0.0",
     "cordova": "^6.5.0",
     "cssnano": "3.10.0",
-    "electron": "^1.4.15",
+    "electron": "1.4.15",
     "eslint": "^3.14.1",
     "eslint-config-standard": "6.2.1",
     "eslint-plugin-promise": "3.4.0",

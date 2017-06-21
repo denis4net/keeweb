@@ -5,9 +5,9 @@ html {
 body {
   @include size(100%);
   @include user-select(none);
-  @include th-self {
-    color: text-color();
-    background-color: background-color();
+  @include th {
+    color: th(text-color);
+    background-color: th(background-color);
   }
   font-family: $base-font-family;
   font-feature-settings: "kern", "liga 0";
@@ -46,7 +46,7 @@ p {
 
 a {
   @include th {
-    color: text-color();
+    color: th(text-color);
     border-bottom: 1px dotted;
   }
   text-decoration: none;
@@ -81,10 +81,10 @@ img {
   font-weight: 200;
 }
 
-* {
+body:not(.edge) * { // https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12132854/
   @include selection(true) {
     @include th {
-      background-color: text-selection-bg-color();
+      background-color: th(text-selection-bg-color);
     }
   }
 }
