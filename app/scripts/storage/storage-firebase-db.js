@@ -1,5 +1,6 @@
 const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const STORE_KEY = 'firebase-db-credentials';
+const Locale = require('../util/locale');
 
 // https://cryptosense.com/parameter-choice-for-pbkdf2/
 // https://blog.lastpass.com/2015/06/lastpass-security-notice.html
@@ -49,6 +50,19 @@ const FirebaseDB = StorageBase.extend({
         };
     },
 
+    getSettingsConfig: function() {
+        return {
+            fields: [
+                {id: 'user', title: 'openUser', type: 'text', value: this._ctx.user},
+                {id: 'password', title: 'openPass', type: 'password', value: ''},
+                {id: 'newUsername', title: 'newUser', type: 'text', value: ''},
+                {id: 'password', title: 'newPassword', type: 'password', value: ''},
+                {id: 'passwordConfirmation', title: 'newPasswordConfirmation', type: 'password', value: ''},
+                {id: 'changeCredentials', title: 'newCredentials', type: 'button', value: Locale.newCredentials}
+            ]
+        };
+    },
+
     getPathForName: function (fileName) {
         return fileName;
     },
@@ -93,8 +107,8 @@ const FirebaseDB = StorageBase.extend({
         }).then((bits) => Base58.encode(new Uint8Array(bits)));
     },
 
-    _login: function(userId) {
-        this._ctx = { userId: userId };
+    _login: function(config) {
+        this._ctx = { userId: config.userId, user: config.user };
         SettingsStore.save(STORE_KEY, this._ctx);
         return this._getDBRef().once('value').then((s) => {
             const err = s.exists() ? null : 'User or password is incorrect or user doesn\'t exist';
@@ -104,7 +118,7 @@ const FirebaseDB = StorageBase.extend({
 
     _signUp: function (config) {
         return this._generateUserToken(config).then(userId => {
-            this._ctx = { userId: userId };
+            this._ctx = { userId: userId, user: config.user };
 
             return this._getDBRef().once('value').then((s) => {
                 if (s.exists()) {
@@ -170,11 +184,11 @@ const FirebaseDB = StorageBase.extend({
         if (config.signUp) {
             return this._signUp(config).then(callback).catch(callback);
         } else if (config.userID && config.userID.length > 0) {
-            return this._login(config.userID)
+            return this._login(config)
                 .then(callback)
                 .catch(callback);
         } else {
-            return this._generateUserToken(config).then(userID => this._login(userID))
+            return this._generateUserToken(config).then(userID => this._login(config))
                 .then(callback)
                 .catch(callback);
         }

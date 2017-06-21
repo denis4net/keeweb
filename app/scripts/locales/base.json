@@ -187,6 +187,11 @@
   "openUserID": "User ID",
   "openSignUp": "Sign Up",
 
+  "newUser": "New user",
+  "newPassword": "New password",
+  "newPasswordConfirmation": "Password confirmation",
+  "newCredentials": "Change credentials",
+
   "detAttDownload": "Shift-click attachment button to download or",
   "detAttDelToRemove": "Delete to remove",
   "detEmpty": "Your passwords will be displayed here",
