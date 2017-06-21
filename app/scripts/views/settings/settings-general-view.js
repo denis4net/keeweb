@@ -44,7 +44,8 @@ const SettingsGeneralView = Backbone.View.extend({
         'click .settings__general-show-advanced': 'showAdvancedSettings',
         'click .settings__general-dev-tools-link': 'openDevTools',
         'click .settings__general-try-beta-link': 'tryBeta',
-        'click .settings__general-show-logs-link': 'showLogs'
+        'click .settings__general-show-logs-link': 'showLogs',
+        'click .settings__general-change-credentials': 'changeCredentials'
     },
 
     views: null,
@@ -324,6 +325,10 @@ const SettingsGeneralView = Backbone.View.extend({
 
     scrollToBottom: function() {
         this.$el.closest('.scroller').scrollTop(this.$el.height());
+    },
+
+    changeCredentials: function() {
+
     }
 });
 
