@@ -50,17 +50,21 @@ const FirebaseDB = StorageBase.extend({
         };
     },
 
-    getSettingsConfig: function() {
+    getSettingsConfig: function () {
         return {
             fields: [
-                {id: 'user', title: 'openUser', type: 'text', value: this._ctx.user},
-                {id: 'password', title: 'openPass', type: 'password', value: ''},
-                {id: 'newUsername', title: 'newUser', type: 'text', value: ''},
-                {id: 'password', title: 'newPassword', type: 'password', value: ''},
-                {id: 'passwordConfirmation', title: 'newPasswordConfirmation', type: 'password', value: ''},
-                {id: 'changeCredentials', title: 'newCredentials', type: 'button', value: Locale.newCredentials}
+                // { id: 'user', title: 'openUser', type: 'text', value: this._ctx.user },
+                // { id: 'password', title: 'openPass', type: 'password', value: '' },
+                { id: 'newUsername', title: 'newUser', type: 'text', value: '' },
+                { id: 'password', title: 'newPassword', type: 'password', value: '' },
+                { id: 'passwordConfirmation', title: 'newPasswordConfirmation', type: 'password', value: '' },
+                { id: 'changeCredentials', title: 'newCredentials', type: 'button', value: Locale.newCredentials }
             ]
         };
+    },
+
+    applySetting: function (key, value) {
+        this.logger.debug(key, value);
     },
 
     getPathForName: function (fileName) {
@@ -107,7 +111,7 @@ const FirebaseDB = StorageBase.extend({
         }).then((bits) => Base58.encode(new Uint8Array(bits)));
     },
 
-    _login: function(config) {
+    _login: function (config) {
         this._ctx = { userId: config.userId, user: config.user };
         SettingsStore.save(STORE_KEY, this._ctx);
         return this._getDBRef().once('value').then((s) => {
