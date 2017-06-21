@@ -4,6 +4,7 @@ This webapp is a browser and desktop password manager compatible with KeePass da
 The app can run either in browser, or as a desktop app.
 
 ![screenshot](https://habrastorage.org/files/ec9/108/3de/ec91083de3e64574a504bc438d038dec.png)
+[![Build Status](https://travis-ci.org/denis4net/keeweb.svg?branch=master)](https://travis-ci.org/denis4net/keeweb)
 
 # Quick Links
 
