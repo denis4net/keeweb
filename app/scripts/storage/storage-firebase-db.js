@@ -43,7 +43,7 @@ const FirebaseDB = StorageBase.extend({
             fields: [
                 { id: 'user', title: 'openUser', placeholder: 'openUserPlaceholder', type: 'text' },
                 { id: 'password', title: 'openPass', placeholder: 'openPassPlaceholder', type: 'password' },
-                { id: 'userID', title: 'openUserID', placeholder: 'openUserIDPlaceholder', type: 'password' },
+                { id: 'userID', title: 'openUserID', placeholder: 'openUserIDPlaceholder', type: 'text' },
                 { id: 'signUp', title: 'openSignUp', placeholder: 'openSignUpPlacehodler', type: 'checkbox' }
             ]
         };
