@@ -1,5 +1,3 @@
-'use strict';
-
 const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const STORE_KEY = 'firebase-db-credentials';
 
@@ -29,7 +27,10 @@ const FirebaseDB = StorageBase.extend({
 
     init: function () {
         StorageBase.prototype.init.apply(this, arguments);
-        this._ctx = SettingsStore.load(STORE_KEY);
+        SettingsStore.load(STORE_KEY).then(data => {
+            this._ctx = data;
+        });
+
         this._initFirebase();
     },
 
@@ -41,9 +42,10 @@ const FirebaseDB = StorageBase.extend({
         return {
             fields: [
                 { id: 'user', title: 'openUser', placeholder: 'openUserPlaceholder', type: 'text' },
-                { id: 'password', title: 'openPass', placeholder: 'openPassPlaceholder', type: 'password' }
-            ],
-            signUp: true
+                { id: 'password', title: 'openPass', placeholder: 'openPassPlaceholder', type: 'password' },
+                { id: 'userID', title: 'openUserID', placeholder: 'openUserIDPlaceholder', type: 'password' },
+                { id: 'signUp', title: 'openSignUp', placeholder: 'openSignUpPlacehodler', type: 'checkbox' }
+            ]
         };
     },
 
@@ -64,6 +66,10 @@ const FirebaseDB = StorageBase.extend({
 
     _getFileRef: function (name) {
         return this._getDBRef('/files/' + (name || ''));
+    },
+
+    _getFileStatRef: function (name) {
+        return this._getDBRef('/files/' + name + '/stat');
     },
 
     _generateUserToken: function (config) {
@@ -87,15 +93,38 @@ const FirebaseDB = StorageBase.extend({
         }).then((bits) => Base58.encode(new Uint8Array(bits)));
     },
 
-    save: function (id, opts, data, callback, rev) {
-        crypto.subtle.digest('SHA-256', data).then((hash) => {
-            rev = rev || Base64.encode(hash);
-            const stat = { rev: rev };
-            this.logger.debug('Saving', id, stat);
-            this._getFileRef(id).update({ data: Base64.encode(data), stat: stat })
-                .then(() => callback(null, stat))
-                .catch(callback);
+    _login: function(userId) {
+        this._ctx = { userId: userId };
+        SettingsStore.save(STORE_KEY, this._ctx);
+        return this._getDBRef().once('value').then((s) => {
+            const err = s.exists() ? null : 'User or password is incorrect or user doesn\'t exist';
+            return err;
         });
+    },
+
+    _signUp: function (config) {
+        return this._generateUserToken(config).then(userId => {
+            this._ctx = { userId: userId };
+
+            return this._getDBRef().once('value').then((s) => {
+                if (s.exists()) {
+                    this._ctx = null;
+                    return;
+                }
+
+                SettingsStore.save(STORE_KEY, this._ctx);
+                return this._getDBRef().set({ registrationTime: Date.now() });
+            });
+        });
+    },
+
+    save: function (id, opts, data, callback) {
+        crypto.subtle.digest('SHA-256', data).then((hash) => {
+            const stat = { rev: Base64.encode(hash) };
+            this.logger.debug('Saving', id, stat);
+            this._getFileRef(id).update({ data: Base64.encode(data), stat: stat });
+            return stat;
+        }).then(stat => callback(null, stat)).catch(callback);
     },
 
     load: function (id, opts, callback) {
@@ -107,10 +136,10 @@ const FirebaseDB = StorageBase.extend({
     },
 
     stat: function (id, opts, callback) {
-        this._getFileRef(id).once('value')
+        this._getFileStatRef(id).once('value')
             .then((snapshot) => {
                 if (snapshot.exists()) {
-                    callback(null, snapshot.child('stat').val());
+                    callback(null, snapshot.val());
                 } else {
                     callback({ notFound: true, message: id + ' is not found' });
                 }
@@ -137,33 +166,18 @@ const FirebaseDB = StorageBase.extend({
         this._getFileRef(id).remove().then(callback).catch(callback);
     },
 
-    signUp: function (config, callback) {
-        this._generateUserToken(config).then(userId => {
-            this._ctx = { userId: userId };
-
-            this._getDBRef().once('value').then((s) => {
-                if (s.exists()) {
-                    this._ctx = null;
-                    return callback('User already exists');
-                }
-
-                SettingsStore.save(STORE_KEY, this._ctx);
-                return this._getDBRef().set({ registrationTime: Date.now() })
-                    .then(callback)
-                    .catch(callback);
-            }).catch(callback);
-        });
-    },
-
     applyConfig: function (config, callback) {
-        this._generateUserToken(config).then(userId => {
-            this._ctx = { userId: userId };
-            SettingsStore.save(STORE_KEY, this._ctx);
-            this._getDBRef().once('value').then((s) => {
-                const err = s.exists() ? null : 'User or password is incorrect or user doesn\'t exist';
-                callback(err);
-            }).catch(callback);
-        });
+        if (config.signUp) {
+            return this._signUp(config).then(callback).catch(callback);
+        } else if (config.userID && config.userID.length > 0) {
+            return this._login(config.userID)
+                .then(callback)
+                .catch(callback);
+        } else {
+            return this._generateUserToken(config).then(userID => this._login(userID))
+                .then(callback)
+                .catch(callback);
+        }
     }
 });
 

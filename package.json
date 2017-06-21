@@ -1,8 +1,9 @@
 {
   "name": "keeweb",
-  "version": "1.4.0",
+  "version": "1.5.4",
   "description": "Free cross-platform password manager compatible with KeePass",
   "main": "Gruntfile.js",
+  "private": true,
   "homepage": "https://keeweb.info",
   "repository": {
     "type": "git",
@@ -15,12 +16,13 @@
     "base64-loader": "1.0.0",
     "cordova": "^6.5.0",
     "cssnano": "3.10.0",
-    "electron": "^1.4.15",
+    "electron": "1.4.15",
     "eslint": "^3.14.1",
     "eslint-config-standard": "6.2.1",
     "eslint-plugin-promise": "3.4.0",
     "eslint-plugin-standard": "2.0.1",
     "exports-loader": "0.6.3",
+    "firebase": "^3.7.3",
     "firebase-tools": "^3.3.0",
     "get-folder-size": "1.0.0",
     "grunt": "1.0.1",
@@ -62,12 +64,14 @@
     "keytar": "3.0.2"
   },
   "scripts": {
-    "start": "grunt",
+    "start": "grunt dev",
     "test": "grunt test",
     "postinstall": "cd desktop && npm install",
     "copy-beta": "grunt && sed 's/<html manifest=\"manifest.appcache\">//' dist/index.html > ../keeweb-beta/diy/index.html && cd ../keeweb-beta && git add diy/index.html && git commit -a -m 'beta' && git push origin master",
     "electron": "electron desktop --htmlpath=http://localhost:8085/tmp/",
-    "build": "grunt",
+    "build": "grunt build-web-app",
+    "build-android": "grunt mobile:android",
+    "build-ios": "grunt mobile:ios",
     "postbuild": "cp dist/index.html firebase/public/index.html",
     "deploy": "cd firebase && firebase deploy"
   },

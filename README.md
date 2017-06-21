@@ -4,8 +4,7 @@ This webapp is a browser and desktop password manager compatible with KeePass da
 The app can run either in browser, or as a desktop app.
 
 ![screenshot](https://habrastorage.org/files/ec9/108/3de/ec91083de3e64574a504bc438d038dec.png)
-
-[![Tested on BrowserStack](https://img.shields.io/badge/browserstack-tested-brightgreen.svg?logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAACsUlEQVQokVWSTWwUZQCGn2%2B%2Bnd2d7XS7K1v6Q6WAaBoKklAMP0rcNBqWiMET0SskxEBAURLjBfZkPJAQWmOswkVjYnqiKiGALQ0NP0EIcjAg0gottNB26f7Odmfmm89TG31P7%2BF5bo%2FgP%2BvX%2FfKto31bmY3vV2O590VJIlKps5FS0Fv35roRkc06C6xYOLkvt3cyWTmh7wdve402411Jys0GNkWSUxXij%2Bw79S1N2brPTp9ZFJ9lM6%2FKfP5c%2BK7ZOvpGmsHMu9wImnjmgUWeDeavpNUQa25ZKpVq%2FST6wbc9QvccjExP3LhkPdJbxpdnOL%2FnEAMPKzy48gve%2BH2q7Wuo37Sdd2Kn2BW7wusPG%2F1k%2B4sZIzd9d1tYqS3lis2Tne8xWoHJn05g9h1jxa2LfLfKRI4McNPdyG03zMyyaqhWLB41dCT2EZ7Ci8bxUimCuVn0zUuIcBSzPs7fo2OI4Z%2BpuYrn8yEeWwGE1CaD%2BWLaB5Rw8P0SrzTGCSdSaOUz%2BWSSvq96cRNLWW1X0TrAV2CGRMQILWseMySYco78P0O8tDTB7sOf09KxFqvOZslrabr37aVD%2Fo4hBY1ljVCCkGyI9UgrciqWcGm6eoY%2F2iKs27iDzm9%2BoJzP4cZqTJcHmCg9oEv6rJyL4b0gnFD91uVn8zNTszhPU13FAoULP3K9awRpNwOK0swEQVBhveuTGXdJdLRRM4zLAsD5bd%2Bn8t7E8cJfTzF8eNwQ5l6zScmSWAhWFmq8XDVIrm9HJ%2BuqfhDtFgBa98va8OBJOZU74IxO4z93EF4AhsCImpitDcQ6W1ARs%2Br55odW99ffLyaH1sK99vEeUXOOaGe%2BQypFIDQh28IThhJCXvZ1%2BJiV7h35X6uL%2Fp9Z2y8WNiOj25BWp67NDaOMa18MHr%2BdzYpggfsXmkch023E8JUAAAAASUVORK5CYII%3D)](https://www.browserstack.com/)
+[![Build Status](https://travis-ci.org/denis4net/keeweb.svg?branch=master)](https://travis-ci.org/denis4net/keeweb)
 
 # Quick Links
 
@@ -17,7 +16,8 @@ Twitter: [kee_web](https://twitter.com/kee_web)
 
 # Status
 
-Project roadmap with planned features and approximate schedule is on [TODO](https://github.com/keeweb/keeweb/wiki/TODO) page.  
+The app is already rather stable, so basic stuff should work.  
+Project roadmap with planned features and approximate schedule is on [TODO](https://github.com/keeweb/keeweb/wiki/TODO) page.
 
 # Self-hosting
 
@@ -32,17 +32,7 @@ If you are using Docker:
 docker run --name keeweb -d -p 443:443 -p 80:80 -v $EXT_DIR:/etc/nginx/external/ antelle/keeweb
 ```
 
-To make Dropbox work in your self-hosted app:
-
-1. [create](https://www.dropbox.com/developers/apps/create) a Dropbox app
-2. find your app key (in Dropbox App page, go to Settings/App key)
-3. add your Dropbox app key to [settings json](https://github.com/keeweb/keeweb/wiki/Configuration#json-app-config)
-
-To make Google Drive work in your self-hosted app:
-1. [Create](https://cloud.google.com/resource-manager/docs/creating-project#via_console) a Google Cloud Project
-2. Create credentials (OAuth client ID and Web application)
-3. Enter your self-hosted URL (e.g. https://www.example.com) in both Authorized JavaScript origins and Authorized redirect URIs
-4. Add the new client ID to your [settings json](https://github.com/keeweb/keeweb/wiki/Configuration#json-app-config)
+To make Dropbox work in your self-hosted app, [go to this Wiki page](https://github.com/keeweb/keeweb/wiki/Dropbox-and-GDrive).
 
 # Building
 
@@ -73,8 +63,9 @@ Also you can help by [translating KeeWeb](https://keeweb.oneskyapp.com) to your 
 
 # Donations
 
-Donate with PayPal:  
-[![Donate with PayPal](https://www.paypal.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=VE75PM997C2GW)  
+KeeWeb is not free to develop. It takes time, requires paid code signing certificates and domains.  
+You can help the project or say "thank you" with this button:  
+[![Donate with PayPal](https://www.paypal.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.me/dvitkovsky)  
 
 Please note: donation does not imply any type of service contract.  
 

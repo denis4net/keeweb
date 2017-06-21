@@ -8,7 +8,7 @@ dist/
 tmp/
 build/
 coverage/
-keys/
+keys
 *.user
 bin/
 obj/
@@ -16,6 +16,5 @@ obj/
 xcuserdata/
 translations.json
 firebase/public
-
 cordova/www
-
+.idea/

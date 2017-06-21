@@ -1,5 +1,3 @@
-'use strict';
-
 const Backbone = require('backbone');
 const AttachmentModel = require('./attachment-model');
 const IconMap = require('../const/icon-map');
@@ -390,9 +388,9 @@ const EntryModel = Backbone.Model.extend({
         this._fillByEntry();
     },
 
-    setField: function(field, val) {
+    setField: function(field, val, allowEmpty) {
         const hasValue = val && (typeof val === 'string' || val.isProtected && val.byteLength);
-        if (hasValue || this.builtInFields.indexOf(field) >= 0) {
+        if (hasValue || allowEmpty || this.builtInFields.indexOf(field) >= 0) {
             this._entryModified();
             this.entry.fields[field] = val;
         } else if (this.entry.fields.hasOwnProperty(field)) {
@@ -617,13 +615,22 @@ const EntryModel = Backbone.Model.extend({
 
     cloneEntry: function(nameSuffix) {
         const newEntry = EntryModel.newEntry(this.group, this.file);
+        const uuid = newEntry.entry.uuid;
         newEntry.entry.copyFrom(this.entry);
-        newEntry.entry.uuid = kdbxweb.KdbxUuid.random();
+        newEntry.entry.uuid = uuid;
         newEntry.entry.times.update();
         newEntry.entry.fields.Title = this.title + nameSuffix;
         newEntry._fillByEntry();
         this.file.reload();
         return newEntry;
+    },
+
+    copyFromTemplate: function(templateEntry) {
+        const uuid = this.entry.uuid;
+        this.entry.copyFrom(templateEntry.entry);
+        this.entry.uuid = uuid;
+        this.entry.fields.Title = '';
+        this._fillByEntry();
     }
 });
 

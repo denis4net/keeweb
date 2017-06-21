@@ -1,15 +1,19 @@
-'use strict';
-
 const MobileRegex = /iPhone|iPad|iPod|Android|BlackBerry|Opera Mini|IEMobile|WPDesktop|Windows Phone|webOS/i;
 const MinDesktopScreenWidth = 800;
 
+const isDesktop = !!(window.process && window.process.versions && window.process.versions.electron);
+
 const FeatureDetector = {
+    isDesktop: isDesktop,
     isMac: navigator.platform.indexOf('Mac') >= 0,
     isWindows: navigator.platform.indexOf('Win') >= 0,
     isiOS: /iPad|iPhone|iPod/i.test(navigator.userAgent),
     isMobile: MobileRegex.test(navigator.userAgent) || screen.width < MinDesktopScreenWidth,
-
+    isPopup: !!((window.parent !== window.top) || window.opener),
+    isStandalone: !!navigator.standalone,
     isBeta: window.location.href.toLowerCase().indexOf('beta.') > 0,
+    isSelfHosted: !isDesktop && !/^http(s?):\/\/((localhost:8085)|((app|beta)\.keeweb\.info))/.test(location.href),
+    needFixClicks: /Edge\/14/.test(navigator.appVersion),
 
     actionShortcutSymbol: function(formatting) {
         return this.isMac ? '⌘' : formatting ? '<span class="thin">ctrl + </span>' : 'ctrl-';
@@ -30,11 +34,32 @@ const FeatureDetector = {
         if (this.isWindows) { return 'Alt+PrintScreen'; }
         return '';
     },
-    shouldMoveHiddenInputToCopySource: function() {
-        return this.isiOS && !/Version\/10/.test(navigator.userAgent);
+    supportsTitleBarStyles: function() {
+        return this.isMac;
     },
-    canCopyReadonlyInput: function() {
-        return !(/CriOS/i.test(navigator.userAgent));
+    hasUnicodeFlags: function() {
+        return this.isMac;
+    },
+    ensureCanRun: function() {
+        if (!window.crypto) {
+            throw 'WebCrypto not available';
+        }
+        if (!localStorage.length && !isDesktop) {
+            try {
+                localStorage.appSettings = '';
+            } catch (e) {
+                throw 'localStorage not available';
+            }
+        }
+    },
+    getBrowserCssClass: function() {
+        if (window.chrome && window.chrome.webstore) {
+            return 'chrome';
+        }
+        if (window.navigator.userAgent.indexOf('Edge/') > -1) {
+            return 'edge';
+        }
+        return '';
     }
 };
 

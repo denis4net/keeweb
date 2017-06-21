@@ -1,12 +1,49 @@
 Release notes
 -------------
-##### v1.5.0 (TBD)
+##### v1.5.4 (2017-06-03)
+`-` fix #649: loading keyfiles with path  
+`-` fix #645: layout issues while switching table view  
+`-` fix #651: window drag style  
+`-` fix #652: create a copy bug  
+
+##### v1.5.3 (2017-05-29)
+`-` fix #638: password generator drag issues  
+`-` fix #636: broken layout in edge 15  
+`-` fix #641: fixed mac app layout issues  
+`-` plugin gallery load button  
+
+##### v1.5.2 (2017-05-25)
+`-` fix #633: template ids issues  
+
+##### v1.5.1 (2017-05-23)
+`-` fix #631: unicode characters in Dropbox files  
+`-` fix backups in desktop  
+`+` plugin API improvements  
+
+##### v1.5.0 (2017-05-20)
+`+` plugins  
+`*` translations are available only as plugins  
+`*` Dropbox API V2  
+`*` deprecated IE  
+`+` entry templates  
+`+` support cloud providers in iOS homescreen apps  
+`+` auto-type improvements and bugfixes  
+`+` mobile field editing improvements  
 `+` file path hint in recent files list  
 `+` cacheConfigSettings config option  
 `+` keyboard-accessible autocomplete  
 `+` entry auto-type context menu  
-`+` `kw.require` now provides access to modules  
+`+` save to WebDAV with PUT  
 `+` showOnlyFilesFromConfig config option  
+`+` mac os window style options  
+`+` lock on hide mac os hide  
+`+` release distribution improvements  
+`+` error message for not supported browsers  
+`-` removed support of devices without clipboard api  
+
+##### v1.4.1 (2017-03-26)
+`+` fix #544: read files with empty binaries  
+`+` fix #555: keyfile selection issue  
 
 ##### v1.4.0 (2017-02-04)
 KDBX4 format support and minor improvements  

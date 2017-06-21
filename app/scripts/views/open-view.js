@@ -1,18 +1,17 @@
-'use strict';
-
 const Backbone = require('backbone');
 const kdbxweb = require('kdbxweb');
 const OpenConfigView = require('./open-config-view');
 const Keys = require('../const/keys');
 const Alerts = require('../comp/alerts');
 const SecureInput = require('../comp/secure-input');
-const DropboxLink = require('../comp/dropbox-link');
+const DropboxChooser = require('../comp/dropbox-chooser');
 const FeatureDetector = require('../util/feature-detector');
 const Logger = require('../util/logger');
 const Locale = require('../util/locale');
 const UrlUtil = require('../util/url-util');
 const InputFx = require('../util/input-fx');
 const Storage = require('../storage');
+const Launcher = require('../comp/launcher');
 
 const logger = new Logger('open-view');
 
@@ -79,7 +78,7 @@ const OpenView = Backbone.View.extend({
             !(this.model.settings.get('canOpenDemo') && !this.model.settings.get('demoOpened'));
         this.renderTemplate({
             lastOpenFiles: this.getLastOpenFiles(),
-            // canOpenKeyFromDropbox: DropboxLink.canChooseFile() && Storage.dropbox.enabled,
+            canOpenKeyFromDropbox: !Launcher && Storage.dropbox.enabled,
             demoOpened: this.model.settings.get('demoOpened'),
             storageProviders: storageProviders,
             canOpen: this.model.settings.get('canOpen'),
@@ -305,21 +304,34 @@ const OpenView = Backbone.View.extend({
 
     openKeyFileFromDropbox: function() {
         if (!this.busy) {
-            DropboxLink.chooseFile((err, res) => {
+            new DropboxChooser((err, res) => {
                 if (err) {
                     return;
                 }
                 this.params.keyFileData = res.data;
                 this.params.keyFileName = res.name;
                 this.displayOpenKeyFile();
-            });
+            }).choose();
         }
     },
 
     openAny: function(reading, ext) {
         this.reading = reading;
         this.params[reading] = null;
-        this.$el.find('.open__file-ctrl').attr('accept', ext || '').val(null).click();
+
+        const fileInput = this.$el.find('.open__file-ctrl').attr('accept', ext || '').val(null);
+
+        if (Launcher && Launcher.openFileChooser) {
+            Launcher.openFileChooser((err, file) => {
+                if (err) {
+                    logger.error('Error opening file chooser', err);
+                } else {
+                    this.processFile(file);
+                }
+            });
+        } else {
+            fileInput.click();
+        }
     },
 
     openLast: function(e) {
@@ -346,7 +358,23 @@ const OpenView = Backbone.View.extend({
             this.removeFile(id);
             return;
         }
-        this.showOpenFileInfo(this.model.fileInfos.get(id));
+
+        const fileInfo = this.model.fileInfos.get(id);
+        this.showOpenFileInfo(fileInfo);
+
+        if (fileInfo && Launcher && Launcher.fingerprints) {
+            this.openFileWithFingerprint(fileInfo);
+        }
+    },
+
+    openFileWithFingerprint(fileInfo) {
+        if (fileInfo.get('fingerprint')) {
+            Launcher.fingerprints.auth(fileInfo.id, fileInfo.get('fingerprint'), password => {
+                this.inputEl.val(password);
+                this.inputEl.trigger('input');
+                this.openDb();
+            });
+        }
     },
 
     removeFile: function(id) {
@@ -362,8 +390,6 @@ const OpenView = Backbone.View.extend({
             this.openDb();
         } else if (code === Keys.DOM_VK_CAPS_LOCK) {
             this.toggleCapsLockWarning(false);
-        } else if (code === Keys.DOM_VK_A) {
-            e.stopImmediatePropagation();
         }
     },
 
@@ -447,6 +473,7 @@ const OpenView = Backbone.View.extend({
         this.params.rev = null;
         this.params.keyFileName = fileInfo.get('keyFileName');
         this.params.keyFilePath = fileInfo.get('keyFilePath');
+        this.params.keyFileData = null;
         this.displayOpenFile();
         this.displayOpenKeyFile();
     },
@@ -569,7 +596,7 @@ const OpenView = Backbone.View.extend({
         const icon = this.$el.find('.open__icon-storage[data-storage=' + storage.name + ']');
         this.busy = true;
         icon.toggleClass('flip3d', true);
-        storage.list((err, files, dir) => {
+        storage.list((err, files) => {
             icon.toggleClass('flip3d', false);
             this.busy = false;
             if (err || !files) {
@@ -582,15 +609,12 @@ const OpenView = Backbone.View.extend({
                 const fileName = UrlUtil.getDataFileName(file.name);
                 buttons.push({result: file.path, title: fileName});
                 allStorageFiles[file.path] = file;
+                logger.debug('listStorage %s - rev: %s', file.name, file.rev);
             });
             if (!buttons.length) {
-                let body = Locale.openNothingFoundBody;
-                if (dir) {
-                    body += ' ' + Locale.openNothingFoundBodyFolder.replace('{}', dir);
-                }
                 Alerts.error({
                     header: Locale.openNothingFound,
-                    body: body
+                    body: Locale.openNothingFoundBody
                 });
                 return;
             }
@@ -637,7 +661,6 @@ const OpenView = Backbone.View.extend({
         this.views.openConfig = new OpenConfigView({ el: this.$el.find('.open__config-wrap'), model: config }).render();
         this.views.openConfig.on('cancel', this.closeConfig.bind(this));
         this.views.openConfig.on('apply', this.applyConfig.bind(this));
-        this.views.openConfig.on('signUp', this.signUp.bind(this));
         this.$el.find('.open__pass-area').addClass('hide');
         this.$el.find('.open__icons--lower').addClass('hide');
     },
@@ -654,43 +677,6 @@ const OpenView = Backbone.View.extend({
         this.$el.find('.open__pass-area').removeClass('hide');
         this.$el.find('.open__config').addClass('hide');
         this.focusInput();
-    },
-
-    signUp: function(config) {
-        if (this.busy || !config) {
-            return;
-        }
-
-        this.busy = true;
-        this.views.openConfig.setDisabled(true);
-        const storage = Storage[config.storage];
-        const opts = _.omit(config, ['path', 'storage']);
-
-        if (storage.signUp) {
-            const req = {
-                waitId: this.storageWaitId,
-                storage: config.storage,
-                path: config.path,
-                opts: opts
-            };
-
-            storage.signUp(opts, this.signUpComplete.bind(this, req));
-        }
-    },
-
-    signUpComplete: function(req, err) {
-        if (this.storageWaitId !== req.waitId) {
-            return;
-        }
-
-        this.storageWaitId = null;
-        this.busy = false;
-        if (err) {
-            this.views.openConfig.setDisabled(false);
-            this.views.openConfig.setError(err);
-        } else {
-            this.closeConfig();
-        }
     },
 
     applyConfig: function(config) {

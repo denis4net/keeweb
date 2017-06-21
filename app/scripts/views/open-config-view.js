@@ -1,5 +1,3 @@
-'use strict';
-
 const Backbone = require('backbone');
 const Locale = require('../util/locale');
 const Keys = require('../const/keys');
@@ -10,7 +8,6 @@ const OpenConfigView = Backbone.View.extend({
     events: {
         'click .open__config-btn-cancel': 'cancel',
         'click .open__config-btn-ok': 'apply',
-        'click .open__config-btn-signup': 'signUp',
         'input input': 'changeInput',
         'keyup input': 'keyup'
     },
@@ -30,13 +27,6 @@ const OpenConfigView = Backbone.View.extend({
         const data = this.getData();
         if (data) {
             this.trigger('apply', data);
-        }
-    },
-
-    signUp: function() {
-        const data = this.getData();
-        if (data) {
-            this.trigger('signUp', data);
         }
     },
 
@@ -60,7 +50,11 @@ const OpenConfigView = Backbone.View.extend({
         this.model.fields.every(function(field) {
             const input = this.$el.find('#open__config-field-' + field.id)[0];
             if (data && input.checkValidity()) {
-                data[field.id] = input.value;
+                if (input.type === 'checkbox') {
+                    data[field.id] = input.checked;
+                } else {
+                    data[field.id] = input.value;
+                }
             } else {
                 data = null;
                 return false;

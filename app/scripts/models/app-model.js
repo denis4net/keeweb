@@ -1,5 +1,3 @@
-'use strict';
-
 const Backbone = require('backbone');
 const AppSettingsModel = require('./app-settings-model');
 const MenuModel = require('./menu/menu-model');
@@ -18,6 +16,8 @@ const FeatureDetector = require('../util/feature-detector');
 const Format = require('../util/format');
 const UrlUtil = require('../util/url-util');
 const AutoType = require('../auto-type');
+const Launcher = require('../comp/launcher');
+const PluginManager = require('../plugins/plugin-manager');
 
 require('../mixins/protected-value-ex');
 
@@ -27,7 +27,7 @@ const AppModel = Backbone.Model.extend({
     initialize: function() {
         this.tags = [];
         this.files = new FileCollection();
-        this.fileInfos = FileInfoCollection.load();
+        this.fileInfos = FileInfoCollection.instance;
         this.menu = new MenuModel();
         this.filter = {};
         this.sort = 'title';
@@ -43,6 +43,8 @@ const AppModel = Backbone.Model.extend({
         this.listenTo(Backbone, 'select-entry', this.selectEntry);
 
         this.appLogger = new Logger('app');
+
+        AppModel.instance = this;
     },
 
     prepare: function() {
@@ -50,38 +52,42 @@ const AppModel = Backbone.Model.extend({
         _.forEach(Storage, prv => prv.init());
     },
 
-    loadConfig: function(configLocation, callback) {
-        this.appLogger.debug('Loading config from', configLocation);
-        const ts = this.appLogger.ts();
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', configLocation);
-        xhr.responseType = 'json';
-        xhr.send();
-        xhr.addEventListener('load', () => {
-            let response = xhr.response;
-            if (!response) {
-                this.appLogger.error('Error loading app config', xhr.statusText);
-                return callback(true);
-            }
-            if (typeof response === 'string') {
-                try {
-                    response = JSON.parse(response);
-                } catch (e) {
-                    this.appLogger.error('Error parsing response', e, response);
-                    return callback(true);
+    loadConfig: function(configLocation) {
+        return new Promise((resolve, reject) => {
+            this.appLogger.debug('Loading config from', configLocation);
+            const ts = this.appLogger.ts();
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', configLocation);
+            xhr.responseType = 'json';
+            xhr.send();
+            xhr.addEventListener('load', () => {
+                let response = xhr.response;
+                if (!response) {
+                    const errorDesc = xhr.statusText === 'OK' ? 'Malformed JSON' : xhr.statusText;
+                    this.appLogger.error('Error loading app config', errorDesc);
+                    return reject('Error loading app config');
                 }
-            }
-            if (!response.settings) {
-                this.appLogger.error('Invalid app config, no settings section', response);
-                return callback(true);
-            }
-            this.appLogger.info('Loaded app config from', configLocation, this.appLogger.ts(ts));
-            this.applyUserConfig(response);
-            callback();
-        });
-        xhr.addEventListener('error', () => {
-            this.appLogger.error('Error loading app config', xhr.statusText, xhr.status);
-            callback(true);
+                if (typeof response === 'string') {
+                    try {
+                        response = JSON.parse(response);
+                    } catch (e) {
+                        this.appLogger.error('Error parsing response', e, response);
+                        return reject('Error parsing response');
+                    }
+                }
+                if (!response.settings) {
+                    this.appLogger.error('Invalid app config, no settings section', response);
+                    return reject('Invalid app config, no settings section');
+                }
+                this.appLogger.info('Loaded app config from', configLocation, this.appLogger.ts(ts));
+                resolve(response);
+            });
+            xhr.addEventListener('error', () => {
+                this.appLogger.error('Error loading app config', xhr.statusText, xhr.status);
+                reject('Error loading app config');
+            });
+        }).then(config => {
+            return this.applyUserConfig(config);
         });
     },
 
@@ -103,6 +109,9 @@ const AppModel = Backbone.Model.extend({
                 }))
                 .reverse()
                 .forEach(fi => this.fileInfos.unshift(fi));
+        }
+        if (config.plugins) {
+            return Promise.all(config.plugins.map(plugin => PluginManager.installIfNew(plugin.url, plugin.manifest)));
         }
     },
 
@@ -313,14 +322,41 @@ const AppModel = Backbone.Model.extend({
         return matches.map(m => m[0]);
     },
 
-    createNewEntry: function() {
+    getEntryTemplates: function() {
+        const entryTemplates = [];
+        this.files.forEach(file => {
+            file.forEachEntryTemplate(entry => {
+                entryTemplates.push({ file, entry });
+            });
+        });
+        return entryTemplates;
+    },
+
+    createNewEntry: function(args) {
         const sel = this.getFirstSelectedGroup();
-        return EntryModel.newEntry(sel.group, sel.file);
+        if (args && args.template) {
+            if (sel.file !== args.template.file) {
+                sel.file = args.template.file;
+                sel.group = args.template.file.get('groups').first();
+            }
+            const templateEntry = args.template.entry;
+            const newEntry = EntryModel.newEntry(sel.group, sel.file);
+            newEntry.copyFromTemplate(templateEntry);
+            return newEntry;
+        } else {
+            return EntryModel.newEntry(sel.group, sel.file);
+        }
     },
 
     createNewGroup: function() {
         const sel = this.getFirstSelectedGroup();
         return GroupModel.newGroup(sel.group, sel.file);
+    },
+
+    createNewTemplateEntry: function() {
+        const file = this.getFirstSelectedGroup().file;
+        const group = file.getEntryTemplatesGroup() || file.createEntryTemplatesGroup();
+        return EntryModel.newEntry(group, file);
     },
 
     createDemoFile: function() {
@@ -372,7 +408,7 @@ const AppModel = Backbone.Model.extend({
             logger.info('Open file from cache as main storage');
             this.openFileFromCache(params, callback, fileInfo);
         } else if (fileInfo && fileInfo.get('openDate') && fileInfo.get('rev') === params.rev && fileInfo.get('storage') !== 'file') {
-            logger.info('Open file from cache because it is latest');
+            logger.info(`Open file from cache because it is latest - rev: ${params.rev}`);
             this.openFileFromCache(params, callback, fileInfo);
         } else if (!fileInfo || !fileInfo.get('openDate') || params.storage === 'file') {
             logger.info('Open file from storage', params.storage);
@@ -440,6 +476,7 @@ const AppModel = Backbone.Model.extend({
 
     openFileWithData: function(params, callback, fileInfo, data, updateCacheOnSuccess) {
         const logger = new Logger('open', params.name);
+        let needLoadKeyFile = false;
         if (!params.keyFileData && fileInfo && fileInfo.get('keyFileName')) {
             params.keyFileName = fileInfo.get('keyFileName');
             if (this.settings.get('rememberKeyFiles') === 'data') {
@@ -447,14 +484,7 @@ const AppModel = Backbone.Model.extend({
             } else if (this.settings.get('rememberKeyFiles') === 'path' && fileInfo.get('keyFilePath')) {
                 params.keyFilePath = fileInfo.get('keyFilePath');
                 if (Storage.file.enabled) {
-                    Storage.file.load(params.keyFilePath, {}, (err, data, stat) => {
-                        if (err) {
-                            logger.info('Storage load error', err);
-                            callback(err);
-                        } else {
-                            params.keyFileData = data;
-                        }
-                    });
+                    needLoadKeyFile = true;
                 }
             }
         }
@@ -465,9 +495,10 @@ const AppModel = Backbone.Model.extend({
             path: params.path,
             keyFileName: params.keyFileName,
             keyFilePath: params.keyFilePath,
-            backup: fileInfo && fileInfo.get('backup') || null
+            backup: fileInfo && fileInfo.get('backup') || null,
+            fingerprint: fileInfo && fileInfo.get('fingerprint') || null
         });
-        file.open(params.password, data, params.keyFileData, err => {
+        const openComplete = err => {
             if (err) {
                 return callback(err);
             }
@@ -494,8 +525,24 @@ const AppModel = Backbone.Model.extend({
             this.addToLastOpenFiles(file, rev);
             this.addFile(file);
             callback(null, file);
-            this.fileOpened(file, data);
-        });
+            this.fileOpened(file, data, params);
+        };
+        const open = () => {
+            file.open(params.password, data, params.keyFileData, openComplete);
+        };
+        if (needLoadKeyFile) {
+            Storage.file.load(params.keyFilePath, {}, (err, data) => {
+                if (err) {
+                    logger.info('Storage load error', err);
+                    callback(err);
+                } else {
+                    params.keyFileData = data;
+                    open();
+                }
+            });
+        } else {
+            open();
+        }
     },
 
     importFileWithXml: function(params, callback) {
@@ -531,7 +578,8 @@ const AppModel = Backbone.Model.extend({
             rev: rev,
             syncDate: file.get('syncDate') || dt,
             openDate: dt,
-            backup: file.get('backup')
+            backup: file.get('backup'),
+            fingerprint: file.get('fingerprint')
         });
         switch (this.settings.get('rememberKeyFiles')) {
             case 'data':
@@ -567,7 +615,7 @@ const AppModel = Backbone.Model.extend({
         }
     },
 
-    fileOpened: function(file, data) {
+    fileOpened: function(file, data, params) {
         if (file.get('storage') === 'file') {
             Storage.file.watch(file.get('path'), _.debounce(() => {
                 this.syncFile(file);
@@ -580,6 +628,7 @@ const AppModel = Backbone.Model.extend({
         if (data && backup && backup.enabled && backup.pending) {
             this.scheduleBackupFile(file, data);
         }
+        this.saveFileFingerprint(file, params.password);
     },
 
     fileClosed: function(file) {
@@ -600,9 +649,6 @@ const AppModel = Backbone.Model.extend({
     },
 
     syncFile: function(file, options, callback) {
-        if (file.get('demo')) {
-            return callback && callback();
-        }
         if (file.get('syncing')) {
             return callback && callback('Sync in progress');
         }
@@ -611,8 +657,9 @@ const AppModel = Backbone.Model.extend({
         }
         const logger = new Logger('sync', file.get('name'));
         const storage = options.storage || file.get('storage');
-        let path = options.path || file.get('path');
         const opts = options.opts || file.get('opts');
+
+        let path = options.path || file.get('path');
         if (storage && Storage[storage].getPathForName && (!path || storage !== file.get('storage'))) {
             path = Storage[storage].getPathForName(file.get('name'));
         }
@@ -721,29 +768,9 @@ const AppModel = Backbone.Model.extend({
                     });
                 });
             };
-            const saveToCacheAndStorage = () => {
-                logger.info('Getting file data for saving');
-                file.getData((data, err) => {
-                    if (err) { return complete(err); }
-                    if (storage === 'file') {
-                        logger.info('Saving to file storage');
-                        saveToStorage(data);
-                    } else if (!file.get('dirty')) {
-                        logger.info('Saving to storage, skip cache because not dirty');
-                        saveToStorage(data);
-                    } else {
-                        logger.info('Saving to cache');
-                        Storage.cache.save(fileInfo.id, null, data, (err) => {
-                            if (err) { return complete(err); }
-                            file.set('dirty', false);
-                            logger.info('Saved to cache, saving to storage');
-                            saveToStorage(data);
-                        });
-                    }
-                });
-            };
             const saveToStorage = (data) => {
                 logger.info('Save data to storage');
+                const storageRev = fileInfo.get('storage') === storage ? fileInfo.get('rev') : undefined;
                 Storage[storage].save(path, opts, data, (err, stat) => {
                     if (err && err.revConflict) {
                         logger.info('Save rev conflict, reloading from storage');
@@ -767,8 +794,30 @@ const AppModel = Backbone.Model.extend({
                         this.scheduleBackupFile(file, data);
                         complete();
                     }
-                }, fileInfo.get('rev'));
+                }, storageRev);
             };
+            const saveToCacheAndStorage = () => {
+                logger.info('Getting file data for saving');
+                file.getData((data, err) => {
+                    if (err) { return complete(err); }
+                    if (storage === 'file') {
+                        logger.info('Saving to file storage');
+                        saveToStorage(data);
+                    } else if (!file.get('dirty')) {
+                        logger.info('Saving to storage, skip cache because not dirty');
+                        saveToStorage(data);
+                    } else {
+                        logger.info('Saving to cache');
+                        Storage.cache.save(fileInfo.id, null, data, (err) => {
+                            if (err) { return complete(err); }
+                            file.set('dirty', false);
+                            logger.info('Saved to cache, saving to storage');
+                            saveToStorage(data);
+                        });
+                    }
+                });
+            };
+
             logger.info('Stat file');
             Storage[storage].stat(path, opts, (err, stat) => {
                 if (err) {
@@ -794,14 +843,14 @@ const AppModel = Backbone.Model.extend({
                     }
                 } else if (stat.rev === fileInfo.get('rev')) {
                     if (file.get('modified')) {
-                        logger.info('Stat found same version, modified, saving');
+                        logger.info('Stat found same version (rev: %s), modified, saving', stat.rev);
                         saveToCacheAndStorage();
                     } else {
-                        logger.info('Stat found same version, not modified');
+                        logger.info('Stat found same version (rev: %s), not modified', stat.rev);
                         complete();
                     }
                 } else {
-                    logger.info('Found new version, loading from storage');
+                    logger.info('Found new version (rev: %s), loading from storage', stat.rev);
                     loadFromStorageAndMerge();
                 }
             });
@@ -858,14 +907,14 @@ const AppModel = Backbone.Model.extend({
         if (Storage[backup.storage].getPathForName) {
             folderPath = Storage[backup.storage].getPathForName(folderPath).replace('.kdbx', '');
         }
-        Storage[backup.storage].stat(folderPath, opts, (err) => {
+        Storage[backup.storage].stat(folderPath, opts, err => {
             if (err) {
                 if (err.notFound) {
                     logger.info('Backup folder does not exist');
                     if (!Storage[backup.storage].mkdir) {
                         return callback('Mkdir not supported by ' + backup.storage);
                     }
-                    Storage[backup.storage].mkdir(folderPath, (err) => {
+                    Storage[backup.storage].mkdir(folderPath, err => {
                         if (err) {
                             logger.error('Error creating backup folder', err);
                             callback('Error creating backup folder');
@@ -926,6 +975,18 @@ const AppModel = Backbone.Model.extend({
         }
         if (needBackup) {
             this.backupFile(file, data, _.noop);
+        }
+    },
+
+    saveFileFingerprint: function(file, password) {
+        if (Launcher && Launcher.fingerprints && password) {
+            const fileInfo = this.fileInfos.get(file.id);
+            Launcher.fingerprints.register(file.id, this.params.password, token => {
+                if (token) {
+                    fileInfo.set('fingerprint', token);
+                    this.model.fileInfos.save();
+                }
+            });
         }
     }
 });
