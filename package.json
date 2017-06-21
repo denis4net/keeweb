@@ -72,8 +72,7 @@
     "build": "grunt build-web-app",
     "build-android": "grunt mobile:android",
     "build-ios": "grunt mobile:ios",
-    "postbuild": "cp dist/index.html firebase/public/index.html",
-    "deploy": "cd firebase && firebase deploy"
+    "deploy": "firebase deploy"
   },
   "author": {
     "name": "Antelle",
