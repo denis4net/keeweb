@@ -27,7 +27,10 @@ const FirebaseDB = StorageBase.extend({
 
     init: function () {
         StorageBase.prototype.init.apply(this, arguments);
-        this._ctx = SettingsStore.load(STORE_KEY);
+        SettingsStore.load(STORE_KEY).then(data => {
+            this._ctx = data;
+        });
+
         this._initFirebase();
     },
 
