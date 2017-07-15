@@ -11,10 +11,15 @@ script:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo docker run -ti --rm --workdir /var/src
   -v $(pwd):/var/src denis4inet/build-keeweb bash -c "npm install && npm run build-android";
   fi;
-deploy:
-  provider: releases
-  api_key:
-    secure: L5Z0LgEW5ubyzxNIGkhRp8RVTUTNzzoZ+P9FlDpxVKzxmyE/JF4IiqNwIyi8MUsLSgBQMC4DkIOX+7XD8lWsDbKJysgY9KLc80fbK1KPUBAhMxKr9Fvd7IEFouLOqSDV9TbvwuHSYrW0rnyg9kZO+QSVoGJQZhY8m9D7XzVK6hYUuFb6uNRiLF236RN9+dM6jrJYj82CakhMs+Bt825mh+b2b/6q15OS7BSOcfouvZnhBmvkwlJgK9eZjAfqrALSEEbT67xWXGhWpEA83sMYbKrQaUnLw4N98BgnDf8PIigR4ukK7HvUKsZgTW2mejjj74fsslowqVk8/uGXUjnre25qt2b1IWirAdRgjejb6tZORClyZBhnFhtbqUJaVf4qhYTa+rF+RUMEI6tGix+ScN+ztNS6NqDezcJQwA7jr399lNqf8uLG9HH4hfm4lXFipHpdROhmthC2P4hZGI7SlcQb/q0YDZOW0pfPXUhdkOv/VQvsKOTa8O+FdkqtgvIk6Y5Xmf9QnhsfeDdYma3g3GUXKCnqLtRErma/YoydhoeRoLlo+N3XH4AuqD/iRloknW7U10POJaxJdigaqVW8tmHSlUgUbf/yUK8bFA3llmvzoOj7B0qCw0NzR1sHEshUmpP9SOrTJA1S80mZW+VzQUyvKtJIdbp1k8/QjZSmu7A=
-  file: "./cordova/platforms/android/build/outputs/apk/android-debug.apk"
-  on:
-    repo: denis4net/keeweb
+after_script:
+- export OWNER=$(git remote get-url origin | sed -re 's/git\@github\.com\:(.*)\/(.*)\.git/\1/g')
+- export REPO=$(git remote get-url origin | sed -re 's/git\@github\.com\:(.*)\/(.*)\.git/\2/g')
+- export RELEASE_TAG=$(git rev-parse HEAD | head -c 8)
+- 'RELEASE_INFO=$(curl --data "{\"tag_name\": \"${RELEASE_TAG}\",\"target_commitish\": \"master\",\"name\":
+  \"${RELEASE_TAG}\",\"body\": \"Release\", \"draft\": false,\"prerelease\": false}"
+  "https://api.github.com/repos/${OWNER}/${REPO}/releases?access_token=${GITHUB_TOKEN}")'
+- echo $RELEASE_INFO
+- export RELEASE_ID=$(echo $RELEASE_INFO | python -c "import sys; import json; print(json.load(sys.stdin)['id'])")
+- 'curl -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.manifold-preview"
+  -H "Content-Type: application/zip" --data-binary @./cordova/platforms/android/build/outputs/apk/android-debug.apk
+  "https://uploads.github.com/repos/${OWNER}/${REPO}/releases/${RELEASE_ID}/assets?name=keeweb.apk"'
