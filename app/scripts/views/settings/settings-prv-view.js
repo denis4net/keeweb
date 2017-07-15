@@ -6,7 +6,13 @@ const SettingsPrvView = Backbone.View.extend({
 
     events: {
         'change .settings__general-prv-field-sel': 'changeField',
-        'input .settings__general-prv-field-txt': 'changeField'
+        'input .settings__general-prv-field-txt': 'changeField',
+        'click .settings__general-prv-field-txt': 'clicked'
+    },
+
+    getStorage: function() {
+        const storage = Storage[this.model.name];
+        return storage;
     },
 
     render: function () {
@@ -27,6 +33,19 @@ const SettingsPrvView = Backbone.View.extend({
         storage.applySetting(id, value);
         if ($(e.target).is('select')) {
             this.render();
+        }
+    },
+
+    clicked: function(e) {
+        const id = e.target.dataset.id;
+        const storage = this.getStorage();
+
+        if (storage && e.target.type === 'button') {
+            for (const item of storage.getSettingsConfig().fields) {
+                if (id === item.id && item.onclick) {
+                    item.onclick();
+                }
+            }
         }
     }
 });

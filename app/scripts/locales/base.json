@@ -191,6 +191,7 @@
   "newPassword": "New password",
   "newPasswordConfirmation": "Password confirmation",
   "newCredentials": "Change credentials",
+  "signOut": "Sign out",
 
   "detAttDownload": "Shift-click attachment button to download or",
   "detAttDelToRemove": "Delete to remove",

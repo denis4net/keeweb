@@ -15,7 +15,7 @@
                     </select>
                 </div>
             {{else}}
-                <label for="settings__general-prv-field-txt-{{id}}">{{res title}}:</label>
+                {{#if title}}<label for="settings__general-prv-field-txt-{{id}}">{{res title}}:</label>{{/if}}
                 {{#if desc}}<div class="settings__general-prv-field-desc muted-color">{{res desc}}</div>{{/if}}
                 <input type="{{type}}"
                        class="input-base settings__general-prv-field settings__input settings__general-prv-field-txt"
@@ -26,6 +26,7 @@
                        {{#if placeholder}}placeholder="{{res placeholder}}"{{/if}}
                     {{#if required}}required{{/if}}
                     {{#if pattern}}pattern="{{{pattern}}}"{{/if}}
+
                 />
             {{/ifeq}}
         {{/each}}

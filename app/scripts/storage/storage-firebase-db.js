@@ -33,6 +33,7 @@ const FirebaseDB = StorageBase.extend({
         });
 
         this._initFirebase();
+        this._settingsCtx = {};
     },
 
     needShowOpenConfig: function () {
@@ -44,7 +45,7 @@ const FirebaseDB = StorageBase.extend({
             fields: [
                 { id: 'user', title: 'openUser', placeholder: 'openUserPlaceholder', type: 'text' },
                 { id: 'password', title: 'openPass', placeholder: 'openPassPlaceholder', type: 'password' },
-                { id: 'userID', title: 'openUserID', placeholder: 'openUserIDPlaceholder', type: 'text' },
+                { id: 'userId', title: 'openUserID', placeholder: 'openUserIDPlaceholder', type: 'text' },
                 { id: 'signUp', title: 'openSignUp', placeholder: 'openSignUpPlacehodler', type: 'checkbox' }
             ]
         };
@@ -55,20 +56,36 @@ const FirebaseDB = StorageBase.extend({
             fields: [
                 // { id: 'user', title: 'openUser', type: 'text', value: this._ctx.user },
                 // { id: 'password', title: 'openPass', type: 'password', value: '' },
-                { id: 'newUsername', title: 'newUser', type: 'text', value: '' },
+                { id: 'newUser', title: 'newUser', type: 'text', value: '' },
                 { id: 'password', title: 'newPassword', type: 'password', value: '' },
                 { id: 'passwordConfirmation', title: 'newPasswordConfirmation', type: 'password', value: '' },
-                { id: 'changeCredentials', title: 'newCredentials', type: 'button', value: Locale.newCredentials }
+                { id: 'changeCredentials', type: 'button', value: Locale.newCredentials, onclick: this.changeCredentials.bind(this) },
+                { id: 'signOut', type: 'button', value: Locale.signOut, onclick: this._reset.bind(this) }
             ]
         };
     },
 
     applySetting: function (key, value) {
-        this.logger.debug(key, value);
+        this._settingsCtx[key] = value;
     },
 
     getPathForName: function (fileName) {
         return fileName;
+    },
+
+    changeCredentials: async function(credentials) {
+        const newConfig = {user: this._settingsCtx.newUser, password: this._settingsCtx.password};
+
+        if (!this._settingsCtx.newUser || !this._settingsCtx.password || !this._settingsCtx.password !== !this._settingsCtx.passwordConfirmation) {
+            throw Error('New credentials don\'t match to requirements');
+        }
+
+        const newUserId = await this._generateUserToken(newConfig);
+        newConfig.userId = newUserId;
+
+        this.logger.info('Moving account %s to %s', this._ctx.userId, newUserId);
+        await this._move(this._ctx.userId, newUserId);
+        return this._login(newConfig);
     },
 
     _initFirebase: function (callback) {
@@ -146,6 +163,27 @@ const FirebaseDB = StorageBase.extend({
         });
     },
 
+    _move: function(oldId, newId) {
+        if (oldId === newId) {
+            throw new Error('The same user id was used');
+        }
+
+        return firebase.database().ref('/users/' + oldId).once('value')
+        .then(s => {
+            if (!s.exists()) {
+                throw new Error('Old user data is not presented in database');
+            }
+
+            const updates = {};
+            updates[oldId] = null;
+            updates[newId] = s.val();
+
+            return firebase.database().ref('/users').update(updates).then(() => {
+                this.logger.info('Account moved');
+            });
+        });
+    },
+
     save: function (id, opts, data, callback) {
         crypto.subtle.digest('SHA-256', data).then((hash) => {
             const stat = { rev: Base64.encode(hash) };
@@ -204,12 +242,12 @@ const FirebaseDB = StorageBase.extend({
 
         if (config.signUp) {
             p = this._signUp(config);
-        } else if (config.userID && config.userID.length > 0) {
+        } else if (config.userId && config.userId.length > 0) {
             p = this._login(config);
         } else {
             p = this._generateUserToken(config)
             .then(userId => {
-                this.logger.debug('UserID is %s', userId);
+                this.logger.info('UserID is %s', userId);
                 config.userId = userId;
                 return this._login(config);
             });
