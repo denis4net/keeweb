@@ -96,7 +96,7 @@ module.exports = function(grunt) {
                 { test: /pikaday\.js$/, loader: 'uglify-loader' },
                 { test: /handlebars/, loader: 'strip-sourcemap-loader' },
                 { test: /\.js$/, exclude: /(node_modules|bower_components)/, loader: 'babel-loader',
-                    query: { presets: ['es2015'], cacheDirectory: true }
+                    query: { presets: ['es2015'], cacheDirectory: true, plugins: [require('babel-plugin-async-to-promises')] }
                 },
                 { test: /\.json$/, loader: 'json-loader' },
                 { test: /argon2-asm\.min\.js$/, loader: 'raw-loader' },
