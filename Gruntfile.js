@@ -222,7 +222,7 @@ module.exports = function(grunt) {
                 nonull: true
             },
             'mobile': {
-                src: 'dist/index.html',
+                src: 'tmp/cordova/app/index.html',
                 dest: 'cordova/www/index.html',
                 nonull: true
             }
@@ -786,18 +786,15 @@ module.exports = function(grunt) {
 
     grunt.registerTask('mobile:android', 'Build web and mobile application', [
         'default',
+        'build-cordova',
         'copy:mobile',
         'cordova:build:android'
     ]);
 
     grunt.registerTask('mobile:ios', 'Build web and mobile application', [
         'default',
+        'build-cordova',
         'copy:mobile',
         'cordova:build:ios'
-    ]);
-
-    grunt.registerTask('cordova', 'Build cordova app', [
-        'default',
-        'build-cordova'
     ]);
 };

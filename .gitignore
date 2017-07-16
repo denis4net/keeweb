@@ -18,3 +18,4 @@ translations.json
 firebase/public
 cordova/www
 .idea/
+cordova/platforms/android/assets/
