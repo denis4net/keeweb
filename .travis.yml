@@ -18,7 +18,7 @@ after_script:
 - 'RELEASE_INFO=$(curl --data "{\"tag_name\": \"${RELEASE_TAG}\",\"target_commitish\": \"master\",\"name\":
   \"${RELEASE_TAG}\",\"body\": \"Release\", \"draft\": false,\"prerelease\": false}"
   "https://api.github.com/repos/${OWNER}/${REPO}/releases?access_token=${GITHUB_TOKEN}")'
-- echo $RELEASE_INFO
+- echo "${RELEASE_INFO} ${OWNER} ${REPO}"
 - export RELEASE_ID=$(echo $RELEASE_INFO | python -c "import sys; import json; print(json.load(sys.stdin)['id'])")
 - 'curl -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.manifold-preview"
   -H "Content-Type: application/zip" --data-binary @./cordova/platforms/android/build/outputs/apk/android-debug.apk
