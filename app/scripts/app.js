@@ -1,3 +1,5 @@
+require('babel-polyfill');
+
 const AppModel = require('./models/app-model');
 const AppView = require('./views/app-view');
 const AppSettingsModel = require('./models/app-settings-model');
